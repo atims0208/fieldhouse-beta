@@ -2,12 +2,13 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/components/auth-provider";
 import { Webcam, Mic, VideoOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 // TODO: Import API functions when needed
 
@@ -21,17 +22,40 @@ export default function BroadcastPage() {
   const [selectedVideoDevice, setSelectedVideoDevice] = useState<string>('');
   const [selectedAudioDevice, setSelectedAudioDevice] = useState<string>('');
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const router = useRouter();
+
+  // Effect to update video element when stream changes
+  useEffect(() => {
+    if (stream && videoRef.current) {
+      console.log("Setting stream to video element");
+      videoRef.current.srcObject = stream;
+      videoRef.current.play().catch(e => console.error("Error playing video:", e));
+    }
+  }, [stream]);
 
   // Get media devices
   useEffect(() => {
     const getDevices = async () => {
       try {
-        await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); // Request permission first
+        console.log("Requesting media permissions...");
+        const initialStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        console.log("Got initial media stream:", initialStream.getTracks().map(t => t.kind));
+        
+        // Stop the initial stream since we'll create a new one with selected devices
+        initialStream.getTracks().forEach(track => track.stop());
+        
         const devices = await navigator.mediaDevices.enumerateDevices();
+        console.log("Available devices:", devices.map(d => ({ kind: d.kind, label: d.label })));
+        
         setMediaDevices(devices);
+        
         // Set default devices
         const firstVideo = devices.find(d => d.kind === 'videoinput');
         const firstAudio = devices.find(d => d.kind === 'audioinput');
+        
+        console.log("Selected default video device:", firstVideo?.label);
+        console.log("Selected default audio device:", firstAudio?.label);
+        
         if (firstVideo) setSelectedVideoDevice(firstVideo.deviceId);
         if (firstAudio) setSelectedAudioDevice(firstAudio.deviceId);
       } catch (err) {
@@ -48,26 +72,37 @@ export default function BroadcastPage() {
 
   // Start local media stream preview
   const startPreview = async () => {
+    console.log("Starting preview with devices:", {
+      video: selectedVideoDevice,
+      audio: selectedAudioDevice
+    });
+    
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      console.log("Stopping existing stream tracks");
+      stream.getTracks().forEach(track => {
+        track.stop();
+        console.log(`Stopped ${track.kind} track`);
+      });
     }
+    
     try {
       const constraints: MediaStreamConstraints = {
         video: selectedVideoDevice ? { deviceId: { exact: selectedVideoDevice } } : true,
         audio: selectedAudioDevice ? { deviceId: { exact: selectedAudioDevice } } : true,
       };
+      
+      console.log("Requesting media with constraints:", constraints);
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log("Got media stream with tracks:", mediaStream.getTracks().map(t => t.kind));
+      
       setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
     } catch (err) {
       console.error("Error starting preview:", err);
-       toast({
-          title: "Error Starting Preview",
-          description: "Could not access selected camera or microphone.",
-          variant: "destructive",
-        });
+      toast({
+        title: "Error Starting Preview",
+        description: "Could not access selected camera or microphone.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -124,7 +159,28 @@ export default function BroadcastPage() {
     return <p>Please log in to access the broadcast page.</p>; // Or redirect
   }
   if (!user.isStreamer) {
-    return <p>You need streamer privileges to broadcast.</p>; // Or show upgrade option
+    return (
+      <div className="container px-4 py-6 md:px-6">
+        <Card className="bg-card border-fhsb-green/20">
+          <CardHeader>
+            <CardTitle className="text-fhsb-cream">Streamer Privileges Required</CardTitle>
+            <CardDescription>
+              You need to be a streamer to access the broadcast dashboard.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Upgrade your account to streamer status to start broadcasting your sports content.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={() => router.push("/dashboard/upgrade")} className="w-full">
+              Upgrade to Streamer
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -137,11 +193,20 @@ export default function BroadcastPage() {
           <CardDescription>Select your devices and start streaming from your browser.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="aspect-video bg-black border border-fhsb-green/20 rounded-md flex items-center justify-center text-muted-foreground">
+          <div className="aspect-video bg-black border border-fhsb-green/20 rounded-md flex items-center justify-center text-muted-foreground relative min-h-[360px]">
             {stream ? (
-               <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-contain"></video>
+              <video 
+                ref={videoRef} 
+                autoPlay 
+                muted 
+                playsInline 
+                className="w-full h-full object-contain rounded-md"
+              />
             ) : (
-              <VideoOff className="h-16 w-16" />
+              <div className="flex flex-col items-center gap-2">
+                <VideoOff className="h-16 w-16" />
+                <p className="text-sm">No camera preview available</p>
+              </div>
             )}
           </div>
 

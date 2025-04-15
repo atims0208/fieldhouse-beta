@@ -19,7 +19,10 @@ const port = process.env.PORT || 4000;
 // Create HTTP server from Express app
 const server = http_1.default.createServer(app);
 // Middleware
-app.use((0, helmet_1.default)()); // Security headers
+app.use((0, helmet_1.default)({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false
+})); // Security headers
 app.use((0, cors_1.default)({
     origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
     credentials: true
@@ -55,9 +58,8 @@ const startServer = async () => {
         await (0, models_1.testConnection)();
         // Initialize model associations
         (0, models_1.initializeAssociations)();
-        // Sync database models (use force: true in development to reset tables)
-        const force = process.env.NODE_ENV === 'development';
-        await (0, models_1.syncDatabase)(force);
+        // Sync database models (without force to preserve data)
+        await (0, models_1.syncDatabase)(false);
         // --- BEGIN TEMPORARY CODE TO SET ADMIN/STREAMER --- 
         if (process.env.NODE_ENV === 'development') {
             const targetEmail = 'itsthealvin@gmail.com';

@@ -40,16 +40,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Initialize auth state
   useEffect(() => {
     const initializeAuth = async () => {
+      console.log('Initializing auth state...');
       const token = localStorage.getItem('token');
+      console.log('Stored token exists:', !!token);
       
       if (token) {
         try {
+          console.log('Fetching current user data...');
           const userData = await authAPI.getCurrentUser();
+          console.log('Current user data:', {
+            id: userData.id,
+            username: userData.username,
+            isAdmin: userData.isAdmin,
+            isStreamer: userData.isStreamer
+          });
           setUser(userData);
         } catch (error) {
           console.error('Failed to get user data:', error);
           localStorage.removeItem('token');
         }
+      } else {
+        console.log('No token found, user is not authenticated');
       }
       
       setIsLoading(false);
@@ -61,13 +72,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Login function
   const login = async (email: string, password: string): Promise<User> => {
     try {
+      console.log('Attempting login for email:', email);
       const response = await authAPI.login(email, password);
+      console.log('Login response:', {
+        id: response.id,
+        username: response.username,
+        isAdmin: response.isAdmin,
+        isStreamer: response.isStreamer
+      });
       
       // Save token and user data
       localStorage.setItem('token', response.token);
-      setUser(response);
+      console.log('Token saved to localStorage');
       
-      return response;
+      // Fetch fresh user data to ensure we have latest permissions
+      console.log('Fetching fresh user data after login...');
+      const userData = await authAPI.getCurrentUser();
+      console.log('Fresh user data:', {
+        id: userData.id,
+        username: userData.username,
+        isAdmin: userData.isAdmin,
+        isStreamer: userData.isStreamer
+      });
+      
+      setUser(userData);
+      return userData;
     } catch (error) {
       console.error('Login error:', error);
       toast({

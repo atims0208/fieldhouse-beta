@@ -202,34 +202,6 @@ export default function VideoPage() {
                   </p>
                 </div>
               </div>
-                  </p>
-                </div>
-              </Link>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={isFollowing ? "default" : "outline"}
-                  className={
-                    isFollowing
-                      ? "bg-fhsb-green text-black hover:bg-fhsb-green/90"
-                      : "border-fhsb-green/30 text-fhsb-cream hover:bg-fhsb-green hover:text-black"
-                  }
-                  onClick={toggleFollow}
-                >
-                  {isFollowing ? "Following" : "Follow"}
-                </Button>
-                <Button
-                  variant={isSubscribed ? "default" : "outline"}
-                  className={
-                    isSubscribed
-                      ? "bg-fhsb-green text-black hover:bg-fhsb-green/90"
-                      : "border-fhsb-green/30 text-fhsb-cream hover:bg-fhsb-green hover:text-black"
-                  }
-                  onClick={toggleSubscribe}
-                >
-                  {isSubscribed ? "Subscribed" : "Subscribe"}
-                </Button>
-              </div>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-4 py-2 border-t border-fhsb-green/20">
@@ -376,41 +348,41 @@ export default function VideoPage() {
               </TabsContent>
             </Tabs>
           </div>
-  </div>
-  ;<div className="space-y-4">
-    <h2 className="text-xl font-bold text-fhsb-cream">Recommended Videos</h2>
-    <div className="space-y-4">
-      {recommendedVideos.map((video) => (
-        <Link key={video.id} href={`/videos/${video.id}`}>
-          <div className="flex gap-4 group hover:bg-card/80 p-2 rounded-lg transition-colors">
-            <div className="relative aspect-video w-40 flex-shrink-0 overflow-hidden rounded">
-              <Image
-                src={video.thumbnail || "/placeholder.svg"}
-                alt={video.title}
-                fill
-                className="object-cover transition-transform group-hover:scale-105"
-              />
-              <div className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1 py-0.5 rounded">
-                {video.duration}
-              </div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-sm text-fhsb-cream group-hover:text-fhsb-green line-clamp-2">
-                {video.title}
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1">{video.streamer.username}</p>
-              <div className="flex items-center gap-1 mt-1">
-                <p className="text-xs text-muted-foreground">{formatViews(video.views)} views</p>
-                <span className="text-xs text-muted-foreground">•</span>
-                <p className="text-xs text-muted-foreground">{formatDate(video.uploadDate)}</p>
-              </div>
-            </div>
+        </div>
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold text-fhsb-cream">Recommended Videos</h2>
+          <div className="space-y-4">
+            {recommendedVideos.map((video) => (
+              <Link key={video.id} href={`/videos/${video.id}`}>
+                <div className="flex gap-4 group hover:bg-card/80 p-2 rounded-lg transition-colors">
+                  <div className="relative aspect-video w-40 flex-shrink-0 overflow-hidden rounded">
+                    <Image
+                      src={video.thumbnail || "/placeholder.svg"}
+                      alt={video.title}
+                      fill
+                      className="object-cover transition-transform group-hover:scale-105"
+                    />
+                    <div className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1 py-0.5 rounded">
+                      {video.duration}
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-sm text-fhsb-cream group-hover:text-fhsb-green line-clamp-2">
+                      {video.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">{video.streamer.username}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <p className="text-xs text-muted-foreground">{formatViews(video.views)} views</p>
+                      <span className="text-xs text-muted-foreground">•</span>
+                      <p className="text-xs text-muted-foreground">{formatDate(video.uploadDate)}</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
-        </Link>
-      ))}
-    </div>
-  </div>
-  </div>
+        </div>
+      </div>
     </div>
   )
 }

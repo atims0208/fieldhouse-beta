@@ -11,21 +11,49 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && (!user || !user.isAdmin)) {
-      // Redirect non-admins away from the admin section
-      console.log('Redirecting non-admin user...');
-      router.replace('/'); // Redirect to home page or login
+    console.log('Admin layout auth state:', {
+      isLoading,
+      user: user ? {
+        id: user.id,
+        username: user.username,
+        isAdmin: user.isAdmin,
+        isStreamer: user.isStreamer
+      } : null
+    });
+
+    if (!isLoading) {
+      if (!user) {
+        console.log('No user found, redirecting to login...');
+        router.replace('/login');
+      } else if (!user.isAdmin) {
+        console.log('User is not admin, redirecting to home...', {
+          username: user.username,
+          isAdmin: user.isAdmin
+        });
+        router.replace('/');
+      } else {
+        console.log('Admin access granted for user:', user.username);
+      }
     }
   }, [user, isLoading, router]);
 
-  if (isLoading || !user || !user.isAdmin) {
-    // Show loading state or null while checking auth/redirecting
+  if (isLoading) {
+    console.log('Admin layout is loading...');
     return (
       <div className="flex justify-center items-center h-screen">
         <p className="text-muted-foreground">Loading Admin Area...</p>
-        {/* Or a spinner component */}
       </div>
-    ); 
+    );
+  }
+
+  if (!user || !user.isAdmin) {
+    console.log('Admin layout access denied:', {
+      user: user ? {
+        username: user.username,
+        isAdmin: user.isAdmin
+      } : null
+    });
+    return null;
   }
 
   // Render layout for authenticated admins

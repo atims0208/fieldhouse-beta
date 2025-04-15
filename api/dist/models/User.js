@@ -50,8 +50,8 @@ const Stream_1 = require("./Stream");
 const Follow_1 = require("./Follow");
 const Product_1 = require("./Product");
 let User = class User extends sequelize_typescript_1.Model {
-    validPassword(password) {
-        return bcrypt.compareSync(password, this.password);
+    async validPassword(password) {
+        return await bcrypt.compare(password, this.password);
     }
     generateStreamKey() {
         if (!this.streamKey && this.isStreamer) {

@@ -18,7 +18,10 @@ const port = process.env.PORT || 4000;
 const server = http.createServer(app);
 
 // Middleware
-app.use(helmet()); // Security headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false
+})); // Security headers
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   credentials: true
@@ -63,9 +66,8 @@ const startServer = async () => {
     // Initialize model associations
     initializeAssociations();
 
-    // Sync database models (use force: true in development to reset tables)
-    const force = process.env.NODE_ENV === 'development';
-    await syncDatabase(force);
+    // Sync database models (without force to preserve data)
+    await syncDatabase(false);
 
     // --- BEGIN TEMPORARY CODE TO SET ADMIN/STREAMER --- 
     if (process.env.NODE_ENV === 'development') {

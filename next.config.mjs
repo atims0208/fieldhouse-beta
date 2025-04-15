@@ -21,6 +21,16 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.b-cdn.net',
+      },
+      {
+        protocol: 'https',
+        hostname: 'placeholder.svg',
+      }
+    ]
   },
   experimental: {
     webpackBuildWorker: true,

@@ -124,8 +124,8 @@ export class User extends Model {
   })
   declare followers?: User[];
 
-  validPassword(password: string): boolean {
-    return bcrypt.compareSync(password, this.password);
+  async validPassword(password: string): Promise<boolean> {
+    return await bcrypt.compare(password, this.password);
   }
 
   generateStreamKey(): string | null {

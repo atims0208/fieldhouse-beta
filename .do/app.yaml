@@ -1,0 +1,47 @@
+name: fieldhouse-beta
+region: nyc
+services:
+  - name: api
+    source_dir: api
+    dockerfile_path: Dockerfile
+    github:
+      repo: itsthealvin/Fieldhouse-beta
+      branch: main
+      deploy_on_push: true
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: DB_USERNAME
+        value: "doadmin"
+      - key: DB_PASSWORD
+        type: SECRET
+        value: "AVNS_yCJGG6BBVytqnvQQpBZ"
+      - key: DB_HOST
+        value: "fieldhouse-db-do-user-13790243-0.k.db.ondigitalocean.com"
+      - key: DB_PORT
+        value: "25060"
+      - key: DB_NAME
+        value: "defaultdb"
+      - key: DB_SSL
+        value: "true"
+      - key: JWT_SECRET
+        type: SECRET
+        value: "NQeYozI1YY33iYlXjfPA4bqNbxq4kH3bCPBJKRl+7pQ="
+      - key: CORS_ORIGIN
+        value: "https://fieldhouse-beta-bbcpy.ondigitalocean.app"
+    instance_size_slug: basic-xxs
+    instance_count: 1
+    http_port: 4000
+    health_check:
+      http_path: /api/health
+      initial_delay_seconds: 30
+      period_seconds: 60
+
+databases:
+  - engine: PG
+    name: fieldhouse-db
+    production: true
+    cluster_name: fieldhouse-db
+    version: "17" 

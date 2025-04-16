@@ -39,6 +39,16 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
+  // Exclude API directory from compilation
+  pageExtensions: ['tsx', 'ts', 'jsx', 'js'].filter(ext => !ext.includes('api')),
+  webpack: (config, { isServer }) => {
+    // Exclude the api directory from being processed
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: [...(config.watchOptions?.ignored || []), '**/api/**']
+    };
+    return config;
+  }
 }
 
 if (userConfig) {

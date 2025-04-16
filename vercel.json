@@ -11,5 +11,7 @@
   ],
   "env": {
     "NEXT_PUBLIC_API_URL": "https://api.fieldhouse.example.com/api"
-  }
+  },
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./api/",
+  "outputDirectory": ".next"
 } 

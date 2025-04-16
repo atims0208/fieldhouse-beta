@@ -45,8 +45,9 @@ export default function RegisterPage() {
     toast({ title: "Success", description: "ID document uploaded (simulated)." })
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
 
     if (!username || !email || !password || !confirmPassword) {
       toast({
@@ -80,30 +81,17 @@ export default function RegisterPage() {
       return
     }
 
-    setIsLoading(true)
-
     try {
-      await register(username, email, password, dateOfBirth, idDocumentUrl)
-
+      await register(username, email, password, new Date(dateOfBirth), idDocumentUrl)
       toast({
         title: "Success",
         description: "Your account has been created successfully",
       })
-
       router.push("/")
-    } catch (error) {
-      let errorMessage = "Failed to create account"
-      if (error instanceof Error) {
-        try {
-          const errorData = JSON.parse(error.message)
-          errorMessage = errorData.message || errorMessage
-        } catch (parseError) {
-          errorMessage = error.message
-        }
-      }
+    } catch {
       toast({
         title: "Error",
-        description: errorMessage,
+        description: "Registration failed. Please try again.",
         variant: "destructive",
       })
     } finally {

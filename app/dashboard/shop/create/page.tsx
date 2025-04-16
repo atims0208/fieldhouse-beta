@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/select'
 import { useAuth } from '@/components/auth-provider'
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
 
 // Form validation schema
 const productSchema = z.object({
@@ -40,6 +41,11 @@ const productSchema = z.object({
 })
 
 type ProductFormValues = z.infer<typeof productSchema>
+
+// @ts-expect-error Server Component
+const ImageUpload = dynamic(() => import("@/components/image-upload"), {
+  ssr: false,
+});
 
 export default function CreateProductPage() {
   const router = useRouter()
@@ -114,7 +120,7 @@ export default function CreateProductPage() {
   
   const onSubmit = async (data: ProductFormValues) => {
     try {
-      setIsSubmitting(true)
+      setIsSubmitting(true);
       
       // Ensure we have at least one image
       if (data.images.length === 0) {
@@ -122,8 +128,8 @@ export default function CreateProductPage() {
           title: "Error",
           description: "At least one product image is required",
           variant: "destructive"
-        })
-        return
+        });
+        return;
       }
       
       // Create the product
@@ -133,26 +139,25 @@ export default function CreateProductPage() {
         price: data.price,
         images: data.images,
         category: data.category
-      })
+      });
       
       toast({
         title: "Success",
         description: "Product created successfully"
-      })
+      });
       
       // Redirect to product dashboard
-      router.push('/dashboard/shop')
-    } catch (error) {
-      console.error('Error creating product:', error)
+      router.push('/dashboard/shop');
+    } catch {
       toast({
         title: "Error",
         description: "Failed to create product",
         variant: "destructive"
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
   
   return (
     <div className="container mx-auto py-8 px-4">

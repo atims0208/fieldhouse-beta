@@ -14,19 +14,18 @@ import StreamCard from "@/components/stream-card"
 import { useAuth } from "@/components/auth-provider"
 import { useStreamWebSocket } from "@/hooks/use-stream-websocket"
 
-export default function StreamPage() {
-  const params = useParams()
-  const streamId = Array.isArray(params.id) ? params.id[0] : params.id
+export default function StreamPage({ params }: { params: { id: string } }) {
+  const { id } = params
   const { user } = useAuth()
   const [isFollowing, setIsFollowing] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [viewerCount, setViewerCount] = useState(0)
 
-  const { isConnected } = useStreamWebSocket(streamId)
+  const { isConnected } = useStreamWebSocket(id)
 
   // Mock stream data
   const stream = {
-    id: streamId,
+    id,
     title: "Championship Finals - Team Alpha vs Team Omega",
     description:
       "Watch the exciting championship finals between Team Alpha and Team Omega. This is the culmination of months of competition, and both teams have shown incredible skill throughout the tournament. Don't miss this epic showdown!",
@@ -372,7 +371,7 @@ export default function StreamPage() {
 
         {/* Chat */}
         <div className="h-full">
-          <ChatInterface streamId={streamId} />
+          <ChatInterface streamId={id} />
         </div>
       </div>
 

@@ -23,8 +23,9 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setIsLoading(true)
 
     if (!email || !password) {
       toast({
@@ -35,21 +36,13 @@ export default function LoginPage() {
       return
     }
 
-    setIsLoading(true)
-
     try {
       await login(email, password)
-
-      toast({
-        title: "Success",
-        description: "You have been logged in successfully",
-      })
-
-      router.push("/")
-    } catch (error) {
+      router.push("/dashboard")
+    } catch {
       toast({
         title: "Error",
-        description: "Invalid email or password",
+        description: "Invalid email or password.",
         variant: "destructive",
       })
     } finally {

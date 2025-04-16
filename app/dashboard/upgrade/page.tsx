@@ -17,7 +17,6 @@ export default function UpgradeToStreamerPage() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [dateOfBirth, setDateOfBirth] = useState("")
-  const [idDocumentUrl, setIdDocumentUrl] = useState("")
 
   const handleUpgrade = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -102,27 +101,6 @@ export default function UpgradeToStreamerPage() {
               />
               <p className="text-xs text-muted-foreground">
                 You must be at least 18 years old to become a streamer.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="idDocument">ID Document (Optional)</Label>
-              <Input
-                id="idDocument"
-                type="file"
-                accept="image/*,.pdf"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) {
-                    // In a real app, you would upload this to your storage service
-                    // and get back a URL
-                    setIdDocumentUrl(URL.createObjectURL(file))
-                  }
-                }}
-                className="bg-muted/10 border-fhsb-green/30 focus-visible:ring-fhsb-green/50"
-              />
-              <p className="text-xs text-muted-foreground">
-                Upload a government-issued ID to verify your identity. This helps maintain trust in our platform.
               </p>
             </div>
 

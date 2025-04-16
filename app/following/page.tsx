@@ -3,7 +3,6 @@
 import { AvatarFallback } from "@/components/ui/avatar"
 import { AvatarImage } from "@/components/ui/avatar"
 import { Avatar } from "@/components/ui/avatar"
-import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -13,7 +12,6 @@ import { useAuth } from "@/components/auth-provider"
 
 export default function FollowingPage() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState("live")
 
   // Mock followed streams data
   const liveStreams = [
@@ -162,35 +160,60 @@ export default function FollowingPage() {
         <p className="text-muted-foreground mt-1">Channels you follow</p>
       </div>
 
-      <Tabs defaultValue="live" onValueChange={setActiveTab}>
+      <div className="flex flex-col gap-4">
+        <Tabs defaultValue="live" className="w-full">
+          <TabsList>
+            <TabsTrigger value="live">Live</TabsTrigger>
+            <TabsTrigger value="offline">Offline</TabsTrigger>
+          </TabsList>
+          <TabsContent value="live">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {liveStreams
+                .filter((stream) => stream.isLive)
+                .map((stream) => (
+                  <StreamCard 
+                    key={stream.id}
+                    id={stream.id}
+                    title={stream.title}
+                    thumbnail={stream.thumbnail}
+                    streamer={stream.streamer}
+                    category={stream.category}
+                    viewerCount={stream.viewerCount}
+                    isLive={stream.isLive}
+                  />
+                ))}
+            </div>
+          </TabsContent>
+          <TabsContent value="offline">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {liveStreams
+                .filter((stream) => !stream.isLive)
+                .map((stream) => (
+                  <StreamCard 
+                    key={stream.id}
+                    id={stream.id}
+                    title={stream.title}
+                    thumbnail={stream.thumbnail}
+                    streamer={stream.streamer}
+                    category={stream.category}
+                    viewerCount={stream.viewerCount}
+                    isLive={stream.isLive}
+                  />
+                ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <Tabs defaultValue="videos" className="mt-6">
         <TabsList className="bg-muted/10 border border-fhsb-green/20">
-          <TabsTrigger value="live" className="data-[state=active]:bg-fhsb-green data-[state=active]:text-black">
-            Live
-          </TabsTrigger>
           <TabsTrigger value="videos" className="data-[state=active]:bg-fhsb-green data-[state=active]:text-black">
             Videos
           </TabsTrigger>
-          <TabsTrigger value="channels" className="data-[state=active]:bg-fhsb-green data-[state=active]:text-black">
-            Channels
+          <TabsTrigger value="clips" className="data-[state=active]:bg-fhsb-green data-[state=active]:text-black">
+            Clips
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="live" className="mt-6">
-          {liveStreams.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {liveStreams.map((stream) => (
-                <StreamCard key={stream.id} {...stream} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">None of your followed channels are currently live</p>
-              <Link href="/browse">
-                <Button className="bg-fhsb-green text-black hover:bg-fhsb-green/90">Discover Streams</Button>
-              </Link>
-            </div>
-          )}
-        </TabsContent>
 
         <TabsContent value="videos" className="mt-6">
           {videos.length > 0 ? (
@@ -250,7 +273,7 @@ export default function FollowingPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="channels" className="mt-6">
+        <TabsContent value="clips" className="mt-6">
           {offlineChannels.length > 0 ? (
             <div className="space-y-4">
               {offlineChannels.map((channel) => (

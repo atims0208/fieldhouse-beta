@@ -6,9 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/components/auth-provider";
-import { Webcam, Mic, VideoOff } from 'lucide-react';
+import { Webcam, VideoOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Copy } from "lucide-react";
 
 // TODO: Import API functions when needed
 

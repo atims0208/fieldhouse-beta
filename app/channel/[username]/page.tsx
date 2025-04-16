@@ -11,9 +11,8 @@ import { Badge } from "@/components/ui/badge"
 import { Bell, BellOff } from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
 
-export default function ChannelPage() {
+export default function ChannelPage({ params }: { params: { username: string } }) {
   const { username } = useParams()
-  const { user } = useAuth()
   const [isFollowing, setIsFollowing] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [isNotificationsOn, setIsNotificationsOn] = useState(false)

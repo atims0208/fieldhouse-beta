@@ -185,6 +185,13 @@ export const adminAPI = {
   // TODO: Add functions for ban/unban, listStreams, stopStream
 };
 
+export const handleError = (error: Error | unknown): never => {
+  if (error instanceof Error) {
+    throw error;
+  }
+  throw new Error('An unexpected error occurred');
+};
+
 export default {
   auth: authAPI,
   user: userAPI,

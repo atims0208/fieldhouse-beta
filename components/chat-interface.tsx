@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
+import { useAuth } from "@/components/auth-provider"
 
 interface Message {
   id: string
@@ -11,15 +12,12 @@ interface Message {
   timestamp: Date
 }
 
-interface ChatInterfaceProps {
-  streamId: string
-}
-
-export default function ChatInterface({ streamId }: ChatInterfaceProps) {
+export default function ChatInterface() {
+  const { user } = useAuth()
+  const [isLoggedIn] = useState(!!user)
   const [messages, setMessages] = useState<Message[]>([])
-  const [inputValue, setInputValue] = useState("")
+  const [newMessage, setNewMessage] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [isLoggedIn, setIsLoggedIn] = useState(false) // This would be connected to your auth state
 
   // Simulate receiving messages
   useEffect(() => {
@@ -93,17 +91,17 @@ export default function ChatInterface({ streamId }: ChatInterfaceProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!inputValue.trim()) return
+    if (!newMessage.trim()) return
 
-    const newMessage: Message = {
+    const newMessageObj: Message = {
       id: Date.now().toString(),
       username: "CurrentUser", // Replace with actual username
-      content: inputValue,
+      content: newMessage,
       timestamp: new Date(),
     }
 
-    setMessages((prevMessages) => [...prevMessages, newMessage])
-    setInputValue("")
+    setMessages((prevMessages) => [...prevMessages, newMessageObj])
+    setNewMessage("")
   }
 
   return (
@@ -124,8 +122,8 @@ export default function ChatInterface({ streamId }: ChatInterfaceProps) {
             <input
               type="text"
               placeholder="Type your message..."
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
               className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
             <button

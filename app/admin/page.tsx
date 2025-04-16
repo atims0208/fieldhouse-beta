@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,16 +52,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Statistics | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user?.isAdmin) {
-      toast.error('Access denied. Admin privileges required.');
-      return;
-    }
-
-    loadData();
-  }, [user, loadData]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [usersRes, streamsRes, requestsRes, statsRes] = await Promise.all([
         api.get('/admin/users'),
@@ -79,7 +70,16 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [api]);
+
+  useEffect(() => {
+    if (!user?.isAdmin) {
+      toast.error('Access denied. Admin privileges required.');
+      return;
+    }
+
+    loadData();
+  }, [user, loadData]);
 
   const handleUserStatusUpdate = async (userId: string, updates: Partial<User>) => {
     try {

@@ -2,10 +2,12 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Compass, Users, Menu, X, ShoppingBag, Video } from "lucide-react"
+import { Home, Compass, Users, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useAuth } from "@/components/auth-provider"
+import { cn } from "@/lib/utils"
+import { buttonVariants } from "@/components/ui/button"
 
 export function Navigation() {
   const pathname = usePathname()
@@ -34,12 +36,12 @@ export function Navigation() {
     {
       name: "Categories",
       path: "/categories",
-      icon: <Video className="w-5 h-5" />,
+      icon: <Menu className="w-5 h-5" />,
     },
     {
       name: "Shop",
       path: "/shop",
-      icon: <ShoppingBag className="w-5 h-5" />,
+      icon: <Menu className="w-5 h-5" />,
     },
   ]
 

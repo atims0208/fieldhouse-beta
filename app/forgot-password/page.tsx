@@ -16,8 +16,9 @@ export default function ForgotPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setIsSubmitting(true)
 
     if (!email) {
       toast({
@@ -28,21 +29,16 @@ export default function ForgotPasswordPage() {
       return
     }
 
-    setIsSubmitting(true)
-
     try {
-      // In a real app, this would call an API to send a password reset email
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      setIsSubmitted(true)
+      // Handle password reset request
       toast({
-        title: "Success",
-        description: "Password reset instructions have been sent to your email",
+        title: "Reset link sent",
+        description: "Check your email for password reset instructions.",
       })
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
-        description: "Failed to send password reset email. Please try again.",
+        description: "Failed to send reset link. Please try again.",
         variant: "destructive",
       })
     } finally {

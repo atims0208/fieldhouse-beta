@@ -10,8 +10,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Share2, Flag, ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
 
-export default function VideoPage() {
-  const { id } = useParams()
+export default function VideoPage({ params }: { params: { id: string } }) {
+  const { id } = params
   const { user } = useAuth()
   const [isFollowing, setIsFollowing] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(false)
@@ -19,6 +19,7 @@ export default function VideoPage() {
   const [dislikeCount, setDislikeCount] = useState(32)
   const [hasLiked, setHasLiked] = useState(false)
   const [hasDisliked, setHasDisliked] = useState(false)
+  const [viewerCount, setViewerCount] = useState(0)
 
   // Mock video data
   const video = {

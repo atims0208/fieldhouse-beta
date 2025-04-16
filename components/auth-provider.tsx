@@ -136,12 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Registration error:', error);
       let description = 'An unexpected error occurred during registration.';
       if (error instanceof Error) {
-          try {
-              const errorData = JSON.parse(error.message);
-              description = errorData.message || description;
-          } catch (parseError) {
-              description = error.message;
-          }
+        description = error.message;
       }
       toast({
         title: 'Registration Failed',

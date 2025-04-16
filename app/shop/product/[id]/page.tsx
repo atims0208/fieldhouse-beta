@@ -6,10 +6,13 @@ export const metadata: Metadata = {
   description: 'View product details and make a purchase',
 }
 
-export default async function ProductPage({
-  params,
-}: {
-  params: { id: string }
-}) {
+type Props = {
+  params: {
+    id: string
+  }
+  searchParams: { [key: string]: string | string[] | undefined }
+}
+
+export default async function ProductPage({ params, searchParams }: Props) {
   return <ProductDetails params={params} />
 } 

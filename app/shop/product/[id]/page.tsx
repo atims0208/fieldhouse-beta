@@ -11,7 +11,5 @@ export default async function ProductPage({
 }: {
   params: { id: string }
 }) {
-  // Fetch product data here if needed
-  const product = await Promise.resolve({ id: params.id })
   return <ProductDetails params={params} />
 } 

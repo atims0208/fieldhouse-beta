@@ -8,11 +8,12 @@ export const metadata: Metadata = {
 
 interface Props {
   params: Promise<{ id: string }>
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default async function ProductPage({ params, searchParams }: Props) {
   const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
   return <ProductDetails params={resolvedParams} />
 } 

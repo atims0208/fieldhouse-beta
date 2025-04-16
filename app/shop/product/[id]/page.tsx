@@ -1,10 +1,11 @@
 import { Metadata } from 'next'
-import ProductDetails from '@/app/shop/product/[id]/product-details'
+import ProductDetails from './product-details'
 
 interface PageProps {
   params: {
     id: string
   }
+  searchParams: Record<string, string | string[] | undefined>
 }
 
 export const metadata: Metadata = {
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
   description: 'View product details and make a purchase',
 }
 
-export default async function ProductPage({ params }: PageProps) {
+export default function ProductPage({ params }: PageProps) {
   // You can fetch product data here if needed
   return <ProductDetails params={params} />
 } 

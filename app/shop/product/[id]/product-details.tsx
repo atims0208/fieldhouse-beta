@@ -48,7 +48,7 @@ export default function ProductDetails({ params }: ProductDetailsProps) {
     const fetchProduct = async () => {
       try {
         setLoading(true)
-        // TODO: Replace with actual API call
+        // TODO: Replace with actual API call when ready
         // Mock data for now
         const mockProduct: Product = {
           id,
@@ -59,8 +59,8 @@ export default function ProductDetails({ params }: ProductDetailsProps) {
           isAvailable: true,
           category: "General",
           seller: {
-            id: "1",
-            username: "SampleSeller",
+            id: user?.id || "1",
+            username: user?.username || "SampleSeller",
             avatarUrl: "/placeholder.svg",
             bio: "Sample seller bio"
           }

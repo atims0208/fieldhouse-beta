@@ -59,7 +59,7 @@ export default function AdminDashboard() {
     }
 
     loadData();
-  }, [user]);
+  }, [user, loadData]);
 
   const loadData = async () => {
     try {

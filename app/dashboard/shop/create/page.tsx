@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useAuth } from '@/components/auth-provider'
+import Image from 'next/image'
 
 // Form validation schema
 const productSchema = z.object({
@@ -301,13 +302,15 @@ export default function CreateProductPage() {
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                         {imageUrls.map((url, index) => (
                           <div key={index} className="relative group">
-                            <div className="aspect-square bg-muted rounded overflow-hidden">
-                              <img
+                            <div className="aspect-square bg-muted rounded overflow-hidden relative">
+                              <Image
                                 src={url}
                                 alt={`Product image ${index + 1}`}
-                                className="w-full h-full object-cover"
+                                fill
+                                className="object-cover"
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).src = 'https://placehold.co/600x600/gray/white?text=Error'
+                                  // @ts-ignore - Known limitation with next/image error handling
+                                  e.target.src = 'https://placehold.co/600x600/gray/white?text=Error'
                                 }}
                               />
                             </div>

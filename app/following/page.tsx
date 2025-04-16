@@ -1,13 +1,11 @@
 "use client"
 
 import { AvatarFallback } from "@/components/ui/avatar"
-
 import { AvatarImage } from "@/components/ui/avatar"
-
 import { Avatar } from "@/components/ui/avatar"
-
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import StreamCard from "@/components/stream-card"

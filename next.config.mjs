@@ -13,24 +13,26 @@ try {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
+  reactStrictMode: true,
+  images: {
+    domains: [
+      'localhost',
+      'api.fieldhouse.example.com',
+      'fieldhouse-beta-2024-api.ondigitalocean.app',
+      'files.stripe.com'
+    ]
   },
   typescript: {
+    // !! WARN !!
+    // Dangerously allow production builds to successfully complete even if
+    // your project has type errors.
+    // !! WARN !!
     ignoreBuildErrors: true,
   },
-  images: {
-    unoptimized: true,
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**.b-cdn.net',
-      },
-      {
-        protocol: 'https',
-        hostname: 'placeholder.svg',
-      }
-    ]
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
   },
   experimental: {
     webpackBuildWorker: true,

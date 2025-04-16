@@ -14,6 +14,7 @@ A Twitch-like livestreaming platform built with Next.js, Node.js, PostgreSQL, an
 - Node.js 16+ and npm/pnpm
 - PostgreSQL database (We use DigitalOcean managed database)
 - Bunny.net account with Video Streaming configured
+- DigitalOcean account for deployment
 
 ## Environment Setup
 
@@ -87,7 +88,23 @@ pnpm dev
 - `POST /api/streams/:streamId/end`: End a stream
 - `PUT /api/streams/:streamId/viewers`: Update viewer count
 
-## Database Credentials
+## Deployment
+
+### DigitalOcean App Platform Deployment
+
+1. Fork this repository to your GitHub account
+2. Visit the [DigitalOcean App Platform](https://cloud.digitalocean.com/apps) and click **Create App**
+3. Select **GitHub** as the source and choose your forked repository
+4. Configure the app settings:
+   - Set environment variables
+   - Configure HTTP routes
+   - Add the PostgreSQL database
+5. Choose your preferred region and plan
+6. Click **Launch Basic/Pro App**
+
+The app will be automatically deployed and any future pushes to the main branch will trigger automatic redeployments.
+
+### Database Credentials
 
 The application connects to a DigitalOcean PostgreSQL database with these credentials:
 - Username: doadmin
@@ -95,8 +112,8 @@ The application connects to a DigitalOcean PostgreSQL database with these creden
 - Port: 25060
 - Database: defaultdb
 
-## Streaming Integration
+### Streaming Integration
 
 Streaming is powered by Bunny.net with these credentials:
 - Video Library ID: 409856
-- CDN Hostname: vz-4f8c314d-49b.b-cdn.net 
+- CDN Hostname: vz-4f8c314d-49b.b-cdn.net

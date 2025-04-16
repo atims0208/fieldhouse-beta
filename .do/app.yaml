@@ -1,11 +1,11 @@
-name: fieldhouse-beta
+name: fieldhouse-beta-2024
 region: nyc
 services:
   - name: api
     source_dir: api
     dockerfile_path: Dockerfile
     github:
-      repo: itsthealvin/Fieldhouse-beta
+      repo: atims0208/Fieldhouse-beta
       branch: main
       deploy_on_push: true
     envs:
@@ -30,7 +30,7 @@ services:
         type: SECRET
         value: "NQeYozI1YY33iYlXjfPA4bqNbxq4kH3bCPBJKRl+7pQ="
       - key: CORS_ORIGIN
-        value: "https://fieldhouse-beta-bbcpy.ondigitalocean.app"
+        value: "*"  # We'll update this with the Vercel domain once deployed
     instance_size_slug: basic-xxs
     instance_count: 1
     http_port: 4000

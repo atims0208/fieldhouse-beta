@@ -1,7 +1,7 @@
-FROM node:20-alpine
+FROM node:18-alpine
 
 # Create app directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
 # Install app dependencies
 COPY package*.json ./
@@ -14,11 +14,11 @@ COPY . .
 RUN npm run build
 
 # Expose port
-EXPOSE 4000
+EXPOSE 8080
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=4000
+ENV PORT=8080
 
 # Start the server
 CMD [ "npm", "start" ] 

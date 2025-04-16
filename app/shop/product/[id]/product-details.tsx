@@ -48,11 +48,27 @@ export default function ProductDetails({ params }: ProductDetailsProps) {
     const fetchProduct = async () => {
       try {
         setLoading(true)
-        const data = await productAPI.getProductById(id)
-        setProduct(data)
+        // TODO: Replace with actual API call
+        // Mock data for now
+        const mockProduct: Product = {
+          id,
+          title: "Sample Product",
+          description: "This is a sample product description.",
+          price: 99.99,
+          images: ["/placeholder.svg"],
+          isAvailable: true,
+          category: "General",
+          seller: {
+            id: "1",
+            username: "SampleSeller",
+            avatarUrl: "/placeholder.svg",
+            bio: "Sample seller bio"
+          }
+        }
+        setProduct(mockProduct)
         
         // Check if current user is the product owner
-        if (user && data.seller && user.id === data.seller.id) {
+        if (user && mockProduct.seller && user.id === mockProduct.seller.id) {
           setIsOwner(true)
         }
       } catch (error) {

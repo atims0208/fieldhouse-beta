@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials } from "@/lib/utils"
@@ -20,6 +20,20 @@ export default function StreamPage() {
   const [stream, setStream] = useState<Stream | null>(null)
 
   // TODO: Fetch stream data based on ID
+  useEffect(() => {
+    // Mock stream data for now
+    const mockStream: Stream = {
+      id: "1",
+      title: "Live Stream",
+      streamer: {
+        username: "Streamer",
+        avatar: null
+      },
+      viewerCount: 0,
+      isLive: true
+    }
+    setStream(mockStream)
+  }, [])
   
   if (!stream) {
     return <div>Loading...</div>

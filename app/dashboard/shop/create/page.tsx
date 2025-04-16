@@ -38,7 +38,8 @@ export default function CreateProductPage() {
   const onSubmit = async (data: FormData) => {
     try {
       setIsSubmitting(true)
-      // TODO: Implement product creation
+      // TODO: Implement product creation with data
+      console.log('Creating product:', data)
       toast({
         title: "Success",
         description: "Product created successfully",

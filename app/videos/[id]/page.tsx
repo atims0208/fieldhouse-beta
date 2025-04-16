@@ -160,7 +160,7 @@ export default function VideoPage() {
 
   useEffect(() => {
     setVideo(mockVideo)
-  }, [id])
+  }, [id, mockVideo])
 
   if (!video) {
     return <div>Loading...</div>

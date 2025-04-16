@@ -35,6 +35,7 @@ export default function ForgotPasswordPage() {
         title: "Reset link sent",
         description: "Check your email for password reset instructions.",
       })
+      setIsSubmitted(true)
     } catch {
       toast({
         title: "Error",

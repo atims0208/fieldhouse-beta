@@ -1,17 +1,15 @@
 "use client"
 
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { useAuth } from "@/components/auth-provider";
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react'
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { useAuth } from "@/components/auth-provider"
+import { useRouter } from 'next/navigation'
 import { Input } from "@/components/ui/input"
 
 export default function BroadcastPage() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const router = useRouter();
   const [title, setTitle] = useState("")
   const [category, setCategory] = useState("")

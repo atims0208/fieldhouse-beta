@@ -201,24 +201,25 @@ export default function VideoPage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-fhsb-green/20">
-              <div className="flex items-center gap-4">
-                <Link href={`/channel/${video.creator.username}`}>
-                  <Avatar className="h-12 w-12 border border-fhsb-green/30">
-                    <AvatarImage src={video.creator.avatar || "/placeholder.svg"} alt={video.creator.username} />
-                    <AvatarFallback className="bg-muted text-fhsb-cream">
-                      {getInitials(video.creator.username)}
-                    </AvatarFallback>
-                  </Avatar>
-                </Link>
-                <div>
-                  <Link
-                    href={`/channel/${video.creator.username}`}
-                    className="font-medium text-fhsb-cream hover:text-fhsb-green"
-                  >
+            <div className="flex items-center gap-4">
+              <Avatar>
+                <AvatarImage src={video.creator.avatar || undefined} />
+                <AvatarFallback>{getInitials(video.creator.username)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <Link href={`/profile/${video.creator.username}`} className="font-semibold hover:text-fhsb-green">
                     {video.creator.username}
                   </Link>
                 </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={toggleFollow}>
+                  {isFollowing ? "Following" : "Follow"}
+                </Button>
+                <Button onClick={toggleSubscribe}>
+                  {isSubscribed ? "Subscribed" : "Subscribe"}
+                </Button>
               </div>
             </div>
 

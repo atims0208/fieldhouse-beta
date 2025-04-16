@@ -4,7 +4,7 @@ import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
 import { cn } from "@/lib/utils"
-import { useTheme } from "@/components/ui/use-theme"
+import { useTheme } from "./use-theme"
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const
@@ -365,6 +365,15 @@ export {
   ChartStyle,
 }
 
+interface ChartProps {
+  data: any[]
+  categories: string[]
+  index: string
+  colors: string[]
+  valueFormatter?: (value: number) => string
+  startEndOnly?: boolean
+}
+
 export function Chart({
   data,
   categories,
@@ -382,5 +391,65 @@ export function Chart({
     return value.toString()
   }
 
-  // ... rest of the code ...
+  return (
+    <ChartContainer
+      config={{
+        categories: {
+          theme: {
+            light: colors[0],
+            dark: colors[0],
+          },
+        },
+      }}
+    >
+      <RechartsPrimitive.BarChart data={data}>
+        <RechartsPrimitive.XAxis
+          dataKey={index}
+          stroke={theme === 'dark' ? '#ffffff' : '#000000'}
+          tickLine={false}
+          axisLine={false}
+          interval={startEndOnly ? "preserveStartEnd" : "preserveEnd"}
+          tick={{ transform: "translate(0, 6)" }}
+        />
+        <RechartsPrimitive.YAxis
+          stroke={theme === 'dark' ? '#ffffff' : '#000000'}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={yAxisFormatter}
+        />
+        <RechartsPrimitive.CartesianGrid strokeDasharray="4 4" />
+        <RechartsPrimitive.Tooltip
+          content={({ active, payload }) => {
+            if (!active || !payload) return null
+
+            return (
+              <div className="rounded-lg border bg-background p-2 shadow-sm">
+                <div className="grid gap-2">
+                  {payload.map((category, i) => (
+                    <div key={category.name} className="flex items-center gap-2">
+                      <div
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: colors[i] }}
+                      />
+                      <span className="font-medium">
+                        {category.name}: {yAxisFormatter(category.value as number)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          }}
+        />
+        {categories.map((category, i) => (
+          <RechartsPrimitive.Bar
+            key={category}
+            dataKey={category}
+            fill={colors[i]}
+            radius={[4, 4, 0, 0]}
+          />
+        ))}
+      </RechartsPrimitive.BarChart>
+    </ChartContainer>
+  )
 }

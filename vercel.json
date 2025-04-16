@@ -3,12 +3,7 @@
   "buildCommand": "pnpm build",
   "installCommand": "pnpm install",
   "framework": "nextjs",
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
+  "regions": ["sfo1"],
   "env": {
     "NEXT_PUBLIC_API_URL": "https://api.fieldhouse.example.com/api"
   },

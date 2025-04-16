@@ -1,10 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    /* config options here */
-    output: 'export',
-    distDir: "_static",
+    reactStrictMode: true,
+    swcMinify: true,
     images: {
-        unoptimized: true
+        domains: ['vz-4f8c314d-49b.b-cdn.net'], // Add your Bunny.net domain
+    },
+    env: {
+        NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     },
 }
 

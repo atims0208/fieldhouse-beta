@@ -117,3 +117,110 @@ The application connects to a DigitalOcean PostgreSQL database with these creden
 Streaming is powered by Bunny.net with these credentials:
 - Video Library ID: 409856
 - CDN Hostname: vz-4f8c314d-49b.b-cdn.net
+
+# Fieldhouse API
+
+Backend API service for the Fieldhouse livestreaming platform.
+
+## Production Deployment
+
+### Prerequisites
+
+1. Node.js 16+ installed on the server
+2. PM2 installed globally (`npm install -g pm2`)
+3. PostgreSQL database set up on DigitalOcean
+4. Domain name configured (if applicable)
+
+### Deployment Steps
+
+1. Clone the repository on your DigitalOcean server:
+   ```bash
+   git clone <your-repo-url>
+   cd fieldhouse-api
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   # Copy the production env file
+   cp .env.production .env
+   
+   # Edit the environment variables
+   nano .env
+   ```
+
+   Update the following variables:
+   - `DATABASE_URL`: Your DigitalOcean PostgreSQL connection string
+   - `JWT_SECRET`: A secure random string
+   - `CORS_ORIGIN`: Your frontend Vercel deployment URL
+   - `BUNNY_API_KEY`: Your Bunny.net production API key
+
+4. Run the deployment script:
+   ```bash
+   chmod +x scripts/deploy.sh
+   ./scripts/deploy.sh
+   ```
+
+5. Set up Nginx reverse proxy (if not already configured):
+   ```nginx
+   server {
+       listen 80;
+       server_name api.yourdomain.com;
+
+       location / {
+           proxy_pass http://localhost:4000;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection 'upgrade';
+           proxy_set_header Host $host;
+           proxy_cache_bypass $http_upgrade;
+       }
+   }
+   ```
+
+6. Set up SSL with Let's Encrypt:
+   ```bash
+   sudo certbot --nginx -d api.yourdomain.com
+   ```
+
+### Monitoring
+
+- View logs: `pm2 logs fieldhouse-api`
+- Monitor status: `pm2 status`
+- Restart server: `pm2 restart fieldhouse-api`
+
+### Database Migrations
+
+Run migrations in production:
+```bash
+npm run migrate
+```
+
+### Troubleshooting
+
+1. Check server logs:
+   ```bash
+   pm2 logs fieldhouse-api
+   ```
+
+2. Check database connection:
+   ```bash
+   curl http://localhost:4000/health
+   ```
+
+3. Verify CORS settings if the frontend can't connect:
+   - Ensure `CORS_ORIGIN` in `.env` matches your Vercel deployment URL
+   - Check for any CORS errors in the browser console
+
+4. If the server won't start:
+   ```bash
+   # Check the logs
+   pm2 logs fieldhouse-api
+   
+   # Restart the process
+   pm2 restart fieldhouse-api
+   ```

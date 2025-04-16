@@ -1,0 +1,12 @@
+api/
+README.md
+.git/
+.env*
+node_modules/
+.next/
+dist/
+build/
+coverage/
+.vscode/
+.idea/
+*.log 

@@ -7,12 +7,12 @@ import { useAuth } from '@/components/auth-provider';
 import { ShieldCheck, Users, Radio } from 'lucide-react'; // Icons
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     console.log('Admin layout auth state:', {
-      isLoading,
+      loading,
       user: user ? {
         id: user.id,
         username: user.username,
@@ -21,7 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       } : null
     });
 
-    if (!isLoading) {
+    if (!loading) {
       if (!user) {
         console.log('No user found, redirecting to login...');
         router.replace('/login');
@@ -35,9 +35,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         console.log('Admin access granted for user:', user.username);
       }
     }
-  }, [user, isLoading, router]);
+  }, [user, loading, router]);
 
-  if (isLoading) {
+  if (loading) {
     console.log('Admin layout is loading...');
     return (
       <div className="flex justify-center items-center h-screen">

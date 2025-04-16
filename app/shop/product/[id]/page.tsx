@@ -14,6 +14,5 @@ interface Props {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default async function ProductPage({ params, searchParams }: Props) {
   const resolvedParams = await params;
-  const resolvedSearchParams = await searchParams;
   return <ProductDetails params={resolvedParams} />
 } 

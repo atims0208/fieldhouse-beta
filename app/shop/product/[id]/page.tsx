@@ -13,6 +13,7 @@ type Props = {
   searchParams: { [key: string]: string | string[] | undefined }
 }
 
-export default async function ProductPage({ params }: Props) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default async function ProductPage({ params, searchParams }: Props) {
   return <ProductDetails params={params} />
 } 

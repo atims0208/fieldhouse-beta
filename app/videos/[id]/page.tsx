@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useParams } from "next/navigation"
@@ -17,6 +17,9 @@ interface Video {
   description: string
   thumbnail: string
   url: string
+  uploadDate: Date
+  category: string
+  tags: string[]
   creator: {
     username: string
     avatar: string | null
@@ -43,6 +46,9 @@ export default function VideoPage() {
       "Watch the exciting championship finals between Team Alpha and Team Omega. This is the culmination of months of competition, and both teams have shown incredible skill throughout the tournament. Don't miss this epic showdown!",
     thumbnail: "/placeholder.svg?height=720&width=1280",
     url: "",
+    uploadDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
+    category: "Basketball",
+    tags: ["Championship", "Finals", "Basketball", "Tournament"],
     creator: {
       username: "OfficialFHSB",
       avatar: "/placeholder.svg?height=200&width=200",
@@ -152,6 +158,11 @@ export default function VideoPage() {
     }
   }
 
+  useEffect(() => {
+    // Simulate loading video data
+    setVideo(mockVideo)
+  }, [])
+
   if (!video) {
     return <div>Loading...</div>
   }
@@ -178,7 +189,7 @@ export default function VideoPage() {
               <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                 <span>{formatViews(viewerCount)} views</span>
                 <span>•</span>
-                <span>{formatDate(new Date(video.uploadDate))}</span>
+                <span>{formatDate(video.uploadDate)}</span>
                 <span>•</span>
                 <Link href={`/categories/${video.category.toLowerCase()}`} className="hover:text-fhsb-green">
                   {video.category}

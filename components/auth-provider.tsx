@@ -19,13 +19,15 @@ export interface User {
 }
 
 // Auth context type
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   api: ReturnType<typeof createApi>;
   login: (email: string, password: string) => Promise<User>;
   register: (username: string, email: string, password: string, dateOfBirth: Date, idDocumentUrl?: string, isStreamer?: boolean) => Promise<User>;
   logout: () => void;
   loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => void;
 }
 
 // Create the context
@@ -127,6 +129,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     logout,
     loading,
+    signIn: login,
+    signOut: logout,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

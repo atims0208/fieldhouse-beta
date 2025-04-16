@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Video, Settings } from "lucide-react"
+import { Input } from "@/components/ui/input"
 
 // TODO: Import API functions when needed
 
@@ -26,6 +27,8 @@ export default function BroadcastPage() {
   const [selectedAudioDevice, setSelectedAudioDevice] = useState<string>('');
   const [stream, setStream] = useState<MediaStream | null>(null);
   const router = useRouter();
+  const [title, setTitle] = useState("")
+  const [category, setCategory] = useState("")
 
   // Effect to update video element when stream changes
   useEffect(() => {
@@ -187,81 +190,33 @@ export default function BroadcastPage() {
   }
 
   return (
-    <div className="container px-4 py-6 md:px-6 space-y-6">
-      <h1 className="text-2xl font-bold text-fhsb-cream">WebRTC Broadcast Setup</h1>
-      
-      <Card className="bg-card border-fhsb-green/20">
+    <div className="container mx-auto px-4 py-8">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-fhsb-cream">Video Preview & Controls</CardTitle>
-          <CardDescription>Select your devices and start streaming from your browser.</CardDescription>
+          <CardTitle>Start Broadcasting</CardTitle>
+          <CardDescription>Configure your stream settings before going live.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="aspect-video bg-black border border-fhsb-green/20 rounded-md flex items-center justify-center text-muted-foreground relative min-h-[360px]">
-            {stream ? (
-              <video 
-                ref={videoRef} 
-                autoPlay 
-                muted 
-                playsInline 
-                className="w-full h-full object-contain rounded-md"
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="title">Stream Title</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter your stream title"
               />
-            ) : (
-              <div className="flex flex-col items-center gap-2">
-                <VideoOff className="h-16 w-16" />
-                <p className="text-sm">No camera preview available</p>
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="video-device">Camera</Label>
-              <Select value={selectedVideoDevice} onValueChange={setSelectedVideoDevice} disabled={isStreaming}>
-                <SelectTrigger className="bg-muted/10 border-fhsb-green/30 focus:ring-fhsb-green/50">
-                  <SelectValue placeholder="Select camera" />
-                </SelectTrigger>
-                <SelectContent className="bg-black border-fhsb-green/30">
-                  {mediaDevices.filter(d => d.kind === 'videoinput').map(device => (
-                    <SelectItem key={device.deviceId} value={device.deviceId}>{device.label || `Camera ${device.deviceId.substring(0, 6)}`}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="audio-device">Microphone</Label>
-              <Select value={selectedAudioDevice} onValueChange={setSelectedAudioDevice} disabled={isStreaming}>
-                <SelectTrigger className="bg-muted/10 border-fhsb-green/30 focus:ring-fhsb-green/50">
-                  <SelectValue placeholder="Select microphone" />
-                </SelectTrigger>
-                <SelectContent className="bg-black border-fhsb-green/30">
-                  {mediaDevices.filter(d => d.kind === 'audioinput').map(device => (
-                    <SelectItem key={device.deviceId} value={device.deviceId}>{device.label || `Microphone ${device.deviceId.substring(0, 6)}`}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Input
+                id="category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="Choose a category"
+              />
             </div>
-          </div>
-
-          <div className="flex justify-end gap-4">
-            {!isStreaming ? (
-              <Button 
-                onClick={handleStartStreaming} 
-                disabled={isLoading || !stream} 
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                <Webcam className="mr-2 h-4 w-4" />
-                {isLoading ? 'Starting...' : 'Start Streaming'}
-              </Button>
-            ) : (
-              <Button 
-                onClick={handleStopStreaming} 
-                disabled={isLoading} 
-                variant="destructive"
-              >
-                <VideoOff className="mr-2 h-4 w-4" />
-                {isLoading ? 'Stopping...' : 'Stop Streaming'}
-              </Button>
-            )}
+            <Button>Go Live</Button>
           </div>
         </CardContent>
       </Card>

@@ -9,9 +9,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Share2, Flag, ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
+import { getInitials } from "@/lib/utils"
 
-export default function VideoPage({ params }: { params: { id: string } }) {
-  const { id } = params
+interface Video {
+  id: string
+  title: string
+  description: string
+  thumbnail: string
+  url: string
+  creator: {
+    username: string
+    avatar: string | null
+  }
+}
+
+export default function VideoPage() {
+  const { id } = useParams()
   const { user } = useAuth()
   const [isFollowing, setIsFollowing] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(false)
@@ -20,25 +33,20 @@ export default function VideoPage({ params }: { params: { id: string } }) {
   const [hasLiked, setHasLiked] = useState(false)
   const [hasDisliked, setHasDisliked] = useState(false)
   const [viewerCount, setViewerCount] = useState(0)
+  const [video, setVideo] = useState<Video | null>(null)
 
   // Mock video data
-  const video = {
+  const mockVideo: Video = {
     id: id as string,
     title: "Championship Finals - Team Alpha vs Team Omega",
     description:
       "Watch the exciting championship finals between Team Alpha and Team Omega. This is the culmination of months of competition, and both teams have shown incredible skill throughout the tournament. Don't miss this epic showdown!",
     thumbnail: "/placeholder.svg?height=720&width=1280",
-    duration: "2:45:30",
-    views: 15420,
-    uploadDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
-    streamer: {
+    url: "",
+    creator: {
       username: "OfficialFHSB",
-      displayName: "Official FHSB",
       avatar: "/placeholder.svg?height=200&width=200",
-      followers: 125000,
     },
-    category: "Basketball",
-    tags: ["Championship", "Finals", "Basketball", "Tournament"],
   }
 
   // Mock recommended videos
@@ -144,6 +152,10 @@ export default function VideoPage({ params }: { params: { id: string } }) {
     }
   }
 
+  if (!video) {
+    return <div>Loading...</div>
+  }
+
   return (
     <div className="container px-4 py-6 md:px-6 space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-6">
@@ -151,11 +163,9 @@ export default function VideoPage({ params }: { params: { id: string } }) {
           {/* Video Player */}
           <div className="video-player-container rounded-lg border border-fhsb-green/20 overflow-hidden">
             <div className="w-full h-full flex items-center justify-center bg-black">
-              <Image
-                src={video.thumbnail || "/placeholder.svg"}
-                alt={video.title}
-                width={1280}
-                height={720}
+              <video
+                src={video.url}
+                controls
                 className="w-full h-full object-contain"
               />
             </div>
@@ -166,9 +176,9 @@ export default function VideoPage({ params }: { params: { id: string } }) {
             <div className="space-y-2">
               <h1 className="text-xl font-bold text-fhsb-cream">{video.title}</h1>
               <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <span>{formatViews(video.views)} views</span>
+                <span>{formatViews(viewerCount)} views</span>
                 <span>•</span>
-                <span>{formatDate(video.uploadDate)}</span>
+                <span>{formatDate(new Date(video.uploadDate))}</span>
                 <span>•</span>
                 <Link href={`/categories/${video.category.toLowerCase()}`} className="hover:text-fhsb-green">
                   {video.category}
@@ -183,24 +193,21 @@ export default function VideoPage({ params }: { params: { id: string } }) {
 
             <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-fhsb-green/20">
               <div className="flex items-center gap-4">
-                <Link href={`/channel/${video.streamer.username}`}>
+                <Link href={`/channel/${video.creator.username}`}>
                   <Avatar className="h-12 w-12 border border-fhsb-green/30">
-                    <AvatarImage src={video.streamer.avatar || "/placeholder.svg"} alt={video.streamer.displayName} />
+                    <AvatarImage src={video.creator.avatar || "/placeholder.svg"} alt={video.creator.username} />
                     <AvatarFallback className="bg-muted text-fhsb-cream">
-                      {video.streamer.displayName.substring(0, 2).toUpperCase()}
+                      {getInitials(video.creator.username)}
                     </AvatarFallback>
                   </Avatar>
                 </Link>
                 <div>
                   <Link
-                    href={`/channel/${video.streamer.username}`}
+                    href={`/channel/${video.creator.username}`}
                     className="font-medium text-fhsb-cream hover:text-fhsb-green"
                   >
-                    {video.streamer.displayName}
+                    {video.creator.username}
                   </Link>
-                  <p className="text-sm text-muted-foreground">
-                    {video.streamer.followers.toLocaleString()} followers
-                  </p>
                 </div>
               </div>
             </div>
@@ -375,7 +382,7 @@ export default function VideoPage({ params }: { params: { id: string } }) {
                     <div className="flex items-center gap-1 mt-1">
                       <p className="text-xs text-muted-foreground">{formatViews(video.views)} views</p>
                       <span className="text-xs text-muted-foreground">•</span>
-                      <p className="text-xs text-muted-foreground">{formatDate(video.uploadDate)}</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(new Date(video.uploadDate))}</p>
                     </div>
                   </div>
                 </div>

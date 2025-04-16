@@ -7,7 +7,7 @@ import { Footer } from "@/components/footer"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import type { Metadata } from "next"
-import Navigation from "@/components/navigation"
+import { Navigation } from "@/components/navigation"
 
 const inter = Inter({ subsets: ["latin"] })
 

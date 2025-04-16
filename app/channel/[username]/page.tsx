@@ -16,6 +16,7 @@ export default function ChannelPage({ params }: { params: { username: string } }
   const [isFollowing, setIsFollowing] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [isNotificationsOn, setIsNotificationsOn] = useState(false)
+  const { api } = useAuth()
 
   // Mock channel data
   const channel = {

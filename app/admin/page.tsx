@@ -2,7 +2,7 @@
 
 import React, { useEffect, useCallback, useState } from 'react';
 import { useAuth } from '@/components/auth-provider';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -66,7 +66,7 @@ export default function AdminDashboard() {
       setStreamerRequests(requestsRes.data);
       setStats(statsRes.data);
     } catch (error) {
-      toast.error('Failed to load admin data');
+      toast.error('Failed to load admin data: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
       toast.success('User status updated successfully');
       loadData();
     } catch (error) {
-      toast.error('Failed to update user status');
+      toast.error('Failed to update user status: ' + (error as Error).message);
     }
   };
 
@@ -97,7 +97,7 @@ export default function AdminDashboard() {
       toast.success('Stream ended successfully');
       loadData();
     } catch (error) {
-      toast.error('Failed to end stream');
+      toast.error('Failed to end stream: ' + (error as Error).message);
     }
   };
 
@@ -107,7 +107,7 @@ export default function AdminDashboard() {
       toast.success(approved ? 'Streamer request approved' : 'Streamer request rejected');
       loadData();
     } catch (error) {
-      toast.error('Failed to handle streamer request');
+      toast.error('Failed to handle streamer request: ' + (error as Error).message);
     }
   };
 

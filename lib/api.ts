@@ -185,11 +185,37 @@ export const adminAPI = {
   // TODO: Add functions for ban/unban, listStreams, stopStream
 };
 
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public data: unknown
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 export const handleError = (error: Error | unknown): never => {
   if (error instanceof Error) {
     throw error;
   }
   throw new Error('An unexpected error occurred');
+};
+
+export const createApi = (token?: string) => {
+  const api = axios.create({
+    baseURL: process.env.NEXT_PUBLIC_API_URL,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  return {
+    get: <T>(url: string) => api.get<T>(url),
+    post: <T>(url: string, data: unknown) => api.post<T>(url, data),
+    put: <T>(url: string, data: unknown) => api.put<T>(url, data),
+    patch: <T>(url: string, data: unknown) => api.patch<T>(url, data),
+    delete: <T>(url: string) => api.delete<T>(url),
+  };
 };
 
 export default {

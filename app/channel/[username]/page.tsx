@@ -9,14 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Bell, BellOff } from "lucide-react"
-import { useAuth } from "@/components/auth-provider"
 
-export default function ChannelPage({ params }: { params: { username: string } }) {
+export default function ChannelPage() {
   const { username } = useParams()
   const [isFollowing, setIsFollowing] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [isNotificationsOn, setIsNotificationsOn] = useState(false)
-  const { api } = useAuth()
 
   // Mock channel data
   const channel = {

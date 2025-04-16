@@ -9,9 +9,9 @@ import { useAuth } from "@/components/auth-provider";
 import { Webcam, VideoOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { Copy } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Switch } from "@/components/ui/switch"
+import { Video, Settings } from "lucide-react"
 
 // TODO: Import API functions when needed
 

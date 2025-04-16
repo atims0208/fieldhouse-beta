@@ -148,7 +148,7 @@ export default function CreateProductPage() {
       
       // Redirect to product dashboard
       router.push('/dashboard/shop');
-    } catch {
+    } catch (err) {
       toast({
         title: "Error",
         description: "Failed to create product",
@@ -314,7 +314,7 @@ export default function CreateProductPage() {
                                 fill
                                 className="object-cover"
                                 onError={(e) => {
-                                  // @ts-ignore - Known limitation with next/image error handling
+                                  // @ts-expect-error - form library types need to be updated
                                   e.target.src = 'https://placehold.co/600x600/gray/white?text=Error'
                                 }}
                               />

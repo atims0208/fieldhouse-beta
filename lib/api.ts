@@ -22,6 +22,15 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+interface RegisterPayload {
+  username: string;
+  email: string;
+  password: string;
+  isStreamer: boolean;
+  dateOfBirth?: string;
+  idDocumentUrl?: string;
+}
+
 // Auth APIs
 export const authAPI = {
   register: async (
@@ -32,7 +41,13 @@ export const authAPI = {
     dateOfBirth?: Date,
     idDocumentUrl?: string
   ) => {
-    const payload: any = { username, email, password, isStreamer };
+    const payload: RegisterPayload = { 
+      username, 
+      email, 
+      password, 
+      isStreamer 
+    };
+    
     if (dateOfBirth) payload.dateOfBirth = dateOfBirth.toISOString().split('T')[0];
     if (idDocumentUrl) payload.idDocumentUrl = idDocumentUrl;
 

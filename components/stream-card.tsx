@@ -1,6 +1,8 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Eye } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getInitials } from "@/lib/utils"
 
 interface StreamCardProps {
   id: string
@@ -39,13 +41,10 @@ export default function StreamCard({ id, title, thumbnail, streamer, category, v
         </div>
         <div className="p-3">
           <div className="flex gap-3">
-            <Image
-              src={streamer.avatar || "/placeholder.svg"}
-              alt={streamer.username}
-              width={32}
-              height={32}
-              className="rounded-full border border-fhsb-green/30"
-            />
+            <Avatar className="h-8 w-8 border border-fhsb-green/30">
+              <AvatarImage src={streamer.avatar} alt={streamer.username} />
+              <AvatarFallback>{getInitials(streamer.username)}</AvatarFallback>
+            </Avatar>
             <div className="flex-1 overflow-hidden">
               <h3 className="truncate font-medium text-sm text-fhsb-cream group-hover:text-fhsb-green">{title}</h3>
               <p className="truncate text-xs text-muted-foreground">{streamer.username}</p>

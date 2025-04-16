@@ -38,22 +38,25 @@ export default function VideoPage() {
   const [viewerCount] = useState(0)
   const [video, setVideo] = useState<Video | null>(null)
 
-  // Mock video data
-  const mockVideo: Video = {
-    id: id as string,
-    title: "Championship Finals - Team Alpha vs Team Omega",
-    description:
-      "Watch the exciting championship finals between Team Alpha and Team Omega. This is the culmination of months of competition, and both teams have shown incredible skill throughout the tournament. Don't miss this epic showdown!",
-    thumbnail: "/placeholder.svg?height=720&width=1280",
-    url: "",
-    uploadDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
-    category: "Basketball",
-    tags: ["Championship", "Finals", "Basketball", "Tournament"],
-    creator: {
-      username: "OfficialFHSB",
-      avatar: "/placeholder.svg?height=200&width=200",
-    },
-  }
+  useEffect(() => {
+    // Mock video data
+    const mockVideo: Video = {
+      id: id as string,
+      title: "Championship Finals - Team Alpha vs Team Omega",
+      description:
+        "Watch the exciting championship finals between Team Alpha and Team Omega. This is the culmination of months of competition, and both teams have shown incredible skill throughout the tournament. Don't miss this epic showdown!",
+      thumbnail: "/placeholder.svg?height=720&width=1280",
+      url: "",
+      uploadDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
+      category: "Basketball",
+      tags: ["Championship", "Finals", "Basketball", "Tournament"],
+      creator: {
+        username: "OfficialFHSB",
+        avatar: "/placeholder.svg?height=200&width=200",
+      },
+    }
+    setVideo(mockVideo)
+  }, [id])
 
   // Mock recommended videos
   const recommendedVideos = [
@@ -157,10 +160,6 @@ export default function VideoPage() {
       return `${years} ${years === 1 ? "year" : "years"} ago`
     }
   }
-
-  useEffect(() => {
-    setVideo(mockVideo)
-  }, [id, mockVideo])
 
   if (!video) {
     return <div>Loading...</div>

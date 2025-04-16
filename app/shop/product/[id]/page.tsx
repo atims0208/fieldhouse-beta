@@ -1,10 +1,11 @@
 import { Metadata } from 'next'
-import ProductDetails from './product-details'
+import ProductDetails from '@/app/shop/product/[id]/product-details'
 
-interface PageProps {
+type PageProps = {
   params: {
     id: string
   }
+  searchParams: { [key: string]: string | string[] | undefined }
 }
 
 export const metadata: Metadata = {

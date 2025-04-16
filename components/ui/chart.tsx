@@ -4,6 +4,7 @@ import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
 import { cn } from "@/lib/utils"
+import { useTheme } from "@/components/ui/use-theme"
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const
@@ -362,4 +363,24 @@ export {
   ChartLegend,
   ChartLegendContent,
   ChartStyle,
+}
+
+export function Chart({
+  data,
+  categories,
+  index,
+  colors,
+  valueFormatter,
+  startEndOnly = false,
+}: ChartProps) {
+  const theme = useTheme()
+
+  const yAxisFormatter = (value: number) => {
+    if (valueFormatter) {
+      return valueFormatter(value)
+    }
+    return value.toString()
+  }
+
+  // ... rest of the code ...
 }

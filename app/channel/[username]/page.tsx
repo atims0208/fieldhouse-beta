@@ -4,7 +4,6 @@ import * as React from "react"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { userAPI, streamAPI } from '@/lib/api'
-import Link from "next/link"
 import StreamCard from '@/components/stream-card'
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"

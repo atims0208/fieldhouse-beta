@@ -35,7 +35,7 @@ export default function VideoPage() {
   const [dislikeCount, setDislikeCount] = useState(32)
   const [hasLiked, setHasLiked] = useState(false)
   const [hasDisliked, setHasDisliked] = useState(false)
-  const [viewerCount, setViewerCount] = useState(0)
+  const [viewerCount] = useState(0)
   const [video, setVideo] = useState<Video | null>(null)
 
   // Mock video data
@@ -159,9 +159,8 @@ export default function VideoPage() {
   }
 
   useEffect(() => {
-    // Simulate loading video data
     setVideo(mockVideo)
-  }, [])
+  }, [id])
 
   if (!video) {
     return <div>Loading...</div>

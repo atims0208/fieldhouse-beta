@@ -31,7 +31,7 @@ const sequelize = new Sequelize({
   logging: console.log,
   dialectOptions: {
     ssl: {
-      require: true,
+      require: process.env.DB_SSL === 'true',
       rejectUnauthorized: false
     },
     keepAlive: true,

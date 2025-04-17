@@ -18,10 +18,18 @@ const config: SequelizeOptions = {
   port: dbPort,
   dialect: 'postgres',
   dialectOptions: {
-    ssl: dbSSL ? {
-      require: true,
+    ssl: {
+      require: dbSSL,
       rejectUnauthorized: false
-    } : false
+    },
+    keepAlive: true,
+    connectTimeout: parseInt(process.env.DB_CONNECT_TIMEOUT || '60000')
+  },
+  pool: {
+    max: parseInt(process.env.DB_POOL_MAX || '5'),
+    min: parseInt(process.env.DB_POOL_MIN || '0'),
+    acquire: parseInt(process.env.DB_POOL_ACQUIRE || '30000'),
+    idle: parseInt(process.env.DB_POOL_IDLE || '10000')
   },
   logging: process.env.NODE_ENV === 'development',
   models: [] // Models will be added in models/index.ts

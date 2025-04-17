@@ -34,25 +34,25 @@ services:
     envs:
       - key: DB_HOST
         scope: RUN_TIME
-        value: ${db.HOSTNAME}
+        value: "fieldhouse-db-do-user-13790243-0.k.db.ondigitalocean.com"
       - key: DB_PORT
         scope: RUN_TIME
-        value: ${db.PORT}
+        value: "25060"
       - key: DB_NAME
         scope: RUN_TIME
-        value: ${db.DATABASE}
+        value: "defaultdb"
       - key: DB_USERNAME
         scope: RUN_TIME
-        value: ${db.USERNAME}
+        value: "doadmin"
       - key: DB_PASSWORD
         scope: RUN_TIME
-        value: ${db.PASSWORD}
+        value: "AVNS_yCJGG6BBVytqnvQQpBZ"
       - key: DB_SSL
         scope: RUN_TIME
         value: "true"
       - key: NODE_ENV
         scope: RUN_TIME
-        value: production
+        value: "production"
       - key: JWT_SECRET
         scope: RUN_TIME
         type: GENERAL

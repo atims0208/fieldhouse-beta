@@ -1,24 +1,30 @@
 FROM node:18-alpine
 
-# Create app directory
 WORKDIR /app
 
-# Install app dependencies
-COPY package*.json ./
-RUN npm install
+# Install curl for health checks
+RUN apk --no-cache add curl
 
-# Bundle app source
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
 COPY . .
 
 # Build TypeScript code
 RUN npm run build
 
-# Expose port
-EXPOSE 8080
+# Remove development dependencies
+RUN npm prune --production
 
-# Set environment variables
-ENV NODE_ENV=production
-ENV PORT=8080
+EXPOSE 4000
 
-# Start the server
-CMD [ "npm", "start" ] 
+# Add health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:4000/api/health || exit 1
+
+CMD ["npm", "start"] 

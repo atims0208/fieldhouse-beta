@@ -1,11 +1,14 @@
+import 'reflect-metadata';
+import { DataSource } from 'typeorm';
+import config from '../ormconfig';
 import express from 'express';
-import http from 'http'; // Import http module
+import http from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { testConnection, syncDatabase, initializeAssociations, User } from './models';
 import routes from './routes';
-import { initializeWebSocket } from './websocket'; // Import WebSocket initializer
+import { initializeWebSocket } from './websocket';
 
 // Load environment variables
 dotenv.config();
@@ -22,42 +25,43 @@ console.log('DB_SSL:', process.env.DB_SSL);
 console.log('--- END DEBUG LOGGING ---');
 
 // Initialize express app
-const app = express();
+const expressApp = express();
 const port = process.env.PORT || 4000;
 
 // Create HTTP server from Express app
-const server = http.createServer(app);
+const server = http.createServer(expressApp);
 
 // Middleware
-app.use(helmet({
+expressApp.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
   contentSecurityPolicy: false
-})); // Security headers
-app.use(cors({
+}));
+
+expressApp.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   credentials: true
 }));
-app.use(express.json()); // Parse JSON request bodies
 
-// --- DEBUG LOGGING: Check parsed body --- 
-app.use((req, res, next) => {
+expressApp.use(express.json());
+
+// Debug logging middleware
+expressApp.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
   if (req.originalUrl.includes('/api/auth/login') && req.method === 'POST') {
     console.log('>>> DEBUG: Request Body after express.json():', req.body);
   }
   next();
 });
-// --- END DEBUG LOGGING ---
 
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded request bodies
+expressApp.use(express.urlencoded({ extended: true }));
 
 // API routes
-app.use('/api', routes);
+expressApp.use('/api', routes);
 
 // Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+expressApp.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Global error handler:', err);
   
-  const statusCode = err.statusCode || 500;
+  const statusCode = (err as any).statusCode || 500;
   const message = err.message || 'Internal Server Error';
   
   res.status(statusCode).json({
@@ -68,9 +72,13 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-// Start server
-const startServer = async () => {
+const AppDataSource = new DataSource(config);
+
+// Initialize database and start server
+const initializeApp = async () => {
   try {
+    await AppDataSource.initialize();
+    
     // Test database connection
     await testConnection();
     
@@ -80,7 +88,7 @@ const startServer = async () => {
     // Sync database models (without force to preserve data)
     await syncDatabase(false);
 
-    // --- BEGIN TEMPORARY CODE TO SET ADMIN/STREAMER --- 
+    // Development environment setup
     if (process.env.NODE_ENV === 'development') {
       const targetEmail = 'itsthealvin@gmail.com';
       try {
@@ -100,21 +108,20 @@ const startServer = async () => {
         console.error(`>>> TEMPORARY: Failed to update user ${targetEmail}:`, err);
       }
     }
-    // --- END TEMPORARY CODE --- 
 
     // Initialize WebSocket server
-    initializeWebSocket(server); // Pass the HTTP server instance
+    initializeWebSocket(server);
     
-    // Start listening for requests on the HTTP server
-    server.listen(port, () => { // Use server.listen instead of app.listen
+    // Start listening for requests
+    server.listen(port, () => {
       console.log(`Server running on port ${port}`);
       console.log(`API available at http://localhost:${port}/api`);
-      console.log(`WebSocket available at ws://localhost:${port}`); // Log WebSocket URL
+      console.log(`WebSocket available at ws://localhost:${port}`);
     });
-  } catch (error) {
-    console.error('Failed to start server:', error);
+  } catch (error: unknown) {
+    console.error('Error during application initialization:', error);
     process.exit(1);
   }
 };
 
-startServer(); 
+initializeApp(); 

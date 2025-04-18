@@ -6,7 +6,14 @@ const nextConfig = {
     },
     env: {
         NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-    }
+    },
+    typescript: {
+        ignoreBuildErrors: process.env.SKIP_TYPE_CHECK === 'true',
+    },
+    eslint: {
+        ignoreDuringBuilds: process.env.SKIP_TYPE_CHECK === 'true',
+    },
+    output: 'standalone',
 }
 
 module.exports = nextConfig

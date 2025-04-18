@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -25,7 +25,7 @@ interface Product {
   }
 }
 
-export default function ShopPage() {
+function ShopPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
@@ -239,5 +239,28 @@ export default function ShopPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-8 px-4">
+        <h1 className="text-3xl font-bold mb-6">Shop</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i} className="w-full h-96 animate-pulse">
+              <div className="h-52 bg-muted rounded-t-lg" />
+              <CardContent className="p-4">
+                <div className="h-4 w-3/4 bg-muted rounded mb-2" />
+                <div className="h-4 w-1/2 bg-muted rounded" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    }>
+      <ShopPageContent />
+    </Suspense>
   )
 } 

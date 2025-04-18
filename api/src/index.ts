@@ -59,8 +59,14 @@ expressApp.use(express.urlencoded({ extended: true }));
 expressApp.use('/api', routes);
 
 // Health check endpoint
-expressApp.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'healthy' });
+expressApp.get('/api/health', async (req, res) => {
+  try {
+    await sequelize.authenticate();
+    res.status(200).json({ status: 'healthy' });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(503).json({ status: 'unhealthy', error: error.message });
+  }
 });
 
 // Error handling middleware
@@ -130,24 +136,29 @@ const initializeApp = async () => {
   }
 };
 
-// Initialize database and start server
-const startServer = async () => {
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 10000; // 10 seconds
+
+const connectWithRetry = async (attempt = 1) => {
   try {
-    // Test database connection
+    console.log(`Database connection attempt ${attempt}/${MAX_RETRIES}...`);
     await sequelize.authenticate();
     console.log('Database connection established successfully');
-
-    // Sync database (in production, you might want to remove this)
-    await sequelize.sync();
-    console.log('Database synchronized');
-
-    // Start server
+    
+    // Start server after successful database connection
     initializeApp();
   } catch (error) {
-    console.error('Unable to start server:', error);
-    // Wait and retry
-    setTimeout(startServer, 5000);
+    console.error(`Connection attempt ${attempt} failed:`, error.message);
+    
+    if (attempt < MAX_RETRIES) {
+      console.log(`Retrying in ${RETRY_DELAY/1000} seconds...`);
+      setTimeout(() => connectWithRetry(attempt + 1), RETRY_DELAY);
+    } else {
+      console.error('Max retries reached. Exiting...');
+      process.exit(1);
+    }
   }
 };
 
-startServer(); 
+// Start the connection process
+connectWithRetry(); 

@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import { testConnection, syncDatabase, initializeAssociations, User } from './models';
 import routes from './routes';
 import { initializeWebSocket } from './websocket';
+import sequelize from './models';
 
 // Load environment variables
 dotenv.config();
@@ -56,6 +57,11 @@ expressApp.use(express.urlencoded({ extended: true }));
 
 // API routes
 expressApp.use('/api', routes);
+
+// Health check endpoint
+expressApp.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'healthy' });
+});
 
 // Error handling middleware
 expressApp.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
@@ -124,4 +130,24 @@ const initializeApp = async () => {
   }
 };
 
-initializeApp(); 
+// Initialize database and start server
+const startServer = async () => {
+  try {
+    // Test database connection
+    await sequelize.authenticate();
+    console.log('Database connection established successfully');
+
+    // Sync database (in production, you might want to remove this)
+    await sequelize.sync();
+    console.log('Database synchronized');
+
+    // Start server
+    initializeApp();
+  } catch (error) {
+    console.error('Unable to start server:', error);
+    // Wait and retry
+    setTimeout(startServer, 5000);
+  }
+};
+
+startServer(); 

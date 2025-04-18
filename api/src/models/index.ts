@@ -4,6 +4,7 @@ import { User } from './User';
 import { Stream } from './Stream';
 import { Follow } from './Follow';
 import { Product } from './Product';
+import config from '../config/database';
 
 // Load environment variables
 dotenv.config();
@@ -21,41 +22,21 @@ console.log('Database Configuration:', dbConfig);
 console.log('Attempting to connect to database...');
 
 const sequelize = new Sequelize({
-  dialect: 'postgres',
-  host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT || '25060'),
-  username: process.env.DB_USERNAME,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  ...config,
   models: [User, Stream, Follow, Product],
-  logging: console.log,
-  dialectOptions: {
-    ssl: {
-      require: process.env.DB_SSL === 'true',
-      rejectUnauthorized: false
-    },
-    keepAlive: true,
-    connectTimeout: parseInt(process.env.DB_CONNECT_TIMEOUT || '60000')
-  },
-  pool: {
-    max: parseInt(process.env.DB_POOL_MAX || '5'),
-    min: parseInt(process.env.DB_POOL_MIN || '0'),
-    acquire: parseInt(process.env.DB_POOL_ACQUIRE || '30000'),
-    idle: parseInt(process.env.DB_POOL_IDLE || '10000')
-  },
+  logging: false,
   retry: {
-    max: 3,
+    max: 10,
     match: [
       /SequelizeConnectionError/,
       /SequelizeConnectionRefusedError/,
       /SequelizeHostNotFoundError/,
+      /SequelizeHostNotReachableError/,
+      /SequelizeInvalidConnectionError/,
       /SequelizeConnectionTimedOutError/,
       /TimeoutError/,
-      /SequelizeConnectionAcquireTimeoutError/,
-      /EAI_AGAIN/,
-      /ENOTFOUND/
-    ]
-  }
+    ],
+  },
 });
 
 // Function to test database connection with retries
@@ -125,8 +106,9 @@ export const initializeAssociations = () => {
   Product.belongsTo(User, { foreignKey: 'userId', as: 'seller' });
 };
 
+export default sequelize;
+
 export {
-  sequelize,
   User,
   Stream,
   Follow,

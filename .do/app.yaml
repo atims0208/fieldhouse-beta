@@ -1,5 +1,8 @@
 name: fieldhouse-beta-2024
 region: nyc
+domains:
+  - domain: api.fieldhouse.live  # Replace with your actual domain
+    type: PRIMARY
 services:
   - name: api
     source_dir: api
@@ -30,7 +33,7 @@ services:
         type: SECRET
         value: "NQeYozI1YY33iYlXjfPA4bqNbxq4kH3bCPBJKRl+7pQ="
       - key: CORS_ORIGIN
-        value: "*"  # We'll update this with the Vercel domain once deployed
+        value: "https://fieldhouse.live"  # Updated to match your domain
     instance_size_slug: basic-xxs
     instance_count: 1
     http_port: 4000

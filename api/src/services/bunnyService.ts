@@ -6,9 +6,7 @@ dotenv.config();
 const BUNNY_VIDEO_LIBRARY_ID = process.env.BUNNY_VIDEO_LIBRARY_ID || '409856';
 const BUNNY_API_KEY = process.env.BUNNY_API_KEY || 'a6f8f102-c79a-424c-bd103d4fa602-cc11-42d9';
 const BUNNY_CDN_HOSTNAME = process.env.BUNNY_CDN_HOSTNAME || 'vz-4f8c314d-49b.b-cdn.net';
-const BUNNY_STREAM_API_KEY = process.env.BUNNY_STREAM_API_KEY;
-const BUNNY_STREAM_API_URL = "https://video.bunnycdn.com";
-const BUNNY_STREAM_PULL_ZONE = process.env.BUNNY_STREAM_PULL_ZONE;
+const BUNNY_STREAM_PULL_ZONE = process.env.BUNNY_STREAM_PULL_ZONE || BUNNY_CDN_HOSTNAME;
 const BUNNY_WHIP_ENDPOINT = process.env.BUNNY_WHIP_ENDPOINT || "https://whip.bunnycdn.com";
 const BUNNY_RTMP_ENDPOINT = process.env.BUNNY_RTMP_ENDPOINT || "rtmp://ingest.b-cdn.net:1935";
 
@@ -109,30 +107,24 @@ export default {
    * Get HLS playback URL for a stream
    * @param streamId Bunny.net stream ID
    */
-  getPlaybackUrl: (libraryId: string): string => {
-    if (!BUNNY_STREAM_PULL_ZONE) {
-      console.warn('BUNNY_STREAM_PULL_ZONE is not set. Playback URLs may be incorrect.');
-      return `/placeholder/stream.m3u8`;
-    }
-    return `https://${BUNNY_STREAM_PULL_ZONE}/${libraryId}/playlist.m3u8`;
+  getPlaybackUrl: (streamId: string): string => {
+    return `https://${BUNNY_STREAM_PULL_ZONE}/${streamId}/playlist.m3u8`;
   },
 
   /**
    * Get RTMP ingest URL with stream key
-   * @param streamId Bunny.net stream ID
    * @param streamKey Stream key
    */
-  getRtmpUrl: (libraryId: string, streamKey: string): string => {
+  getRtmpUrl: (streamKey: string): string => {
     const rtmpBase = BUNNY_RTMP_ENDPOINT.split(':')[0];
     return `${rtmpBase}/live/${streamKey}`;
   },
 
   /**
    * Get WHIP ingest URL for a stream
-   * @param streamId Bunny.net stream ID
    * @param streamKey Stream key
    */
-  getWhipUrl: (libraryId: string, streamKey: string): string => {
-    return `${BUNNY_WHIP_ENDPOINT}/live/${libraryId}/${streamKey}`;
+  getWhipUrl: (streamKey: string): string => {
+    return `${BUNNY_WHIP_ENDPOINT}/live/${streamKey}`;
   }
 }; 

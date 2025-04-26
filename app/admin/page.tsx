@@ -16,6 +16,7 @@ interface User {
   isStreamer: boolean;
   isBanned: boolean;
   bannedUntil: string | null;
+  isAdmin: boolean;
 }
 
 interface Stream {
@@ -23,10 +24,7 @@ interface Stream {
   title: string;
   isLive: boolean;
   viewerCount: number;
-  user: {
-    username: string;
-    avatarUrl: string;
-  };
+  userId: string;
 }
 
 interface StreamerRequest {
@@ -55,10 +53,10 @@ export default function AdminDashboard() {
   const loadData = useCallback(async () => {
     try {
       const [usersRes, streamsRes, requestsRes, statsRes] = await Promise.all([
-        api.get('/admin/users'),
-        api.get('/admin/streams/active'),
-        api.get('/admin/streamer-requests'),
-        api.get('/admin/statistics')
+        api.get<{ users: User[] }>('/admin/users'),
+        api.get<Stream[]>('/admin/streams'),
+        api.get<StreamerRequest[]>('/admin/streamer-requests'),
+        api.get<Statistics>('/admin/statistics')
       ]);
 
       setUsers(usersRes.data.users);

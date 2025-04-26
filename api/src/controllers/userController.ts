@@ -1,262 +1,225 @@
 import { Request, Response } from 'express';
-import { User, Follow, Stream } from '../models';
-import sequelize from '../config/database';
+import { AppDataSource } from '../config/database';
+import { User } from '../models/User';
+import { Follow } from '../models/Follow';
+import { v4 as uuidv4 } from 'uuid';
 
-// Type assertions for models
-const UserModel = User as any;
-const FollowModel = Follow as any;
-const StreamModel = Stream as any;
+export class UserController {
+  // Get user profile
+  async getProfile(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user?.id) {
+        res.status(401).json({ error: 'Not authenticated' });
+        return;
+      }
 
-export default {
-  // Get user profile by username
-  getUserProfile: async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { username } = req.params;
-      
-      const user = await UserModel.findOne({
-        where: { username },
-        attributes: ['id', 'username', 'avatarUrl', 'bio', 'isStreamer', 'createdAt']
-      });
-      
+      const userRepository = AppDataSource.getRepository(User);
+      const user = await userRepository.findOne({ where: { id: req.user.id } });
+
       if (!user) {
-        res.status(404).json({ message: 'User not found' });
+        res.status(404).json({ error: 'User not found' });
         return;
       }
-      
-      // Get follower count
-      const followerCount = await FollowModel.count({
-        where: { followingId: user.id }
-      });
-      
-      // Get following count
-      const followingCount = await FollowModel.count({
-        where: { followerId: user.id }
-      });
-      
-      // Check if authenticated user follows this profile
-      let isFollowing = false;
-      if (req.user) {
-        const followRecord = await FollowModel.findOne({
-          where: {
-            followerId: req.user.id,
-            followingId: user.id
-          }
-        });
-        isFollowing = !!followRecord;
-      }
-      
-      // Get active stream if exists
-      const activeStream = await StreamModel.findOne({
-        where: {
-          userId: user.id,
-          isLive: true
-        },
-        attributes: ['id', 'title', 'viewerCount', 'startedAt']
-      });
-      
-      res.status(200).json({
-        id: user.id,
-        username: user.username,
-        avatarUrl: user.avatarUrl,
-        bio: user.bio,
-        isStreamer: user.isStreamer,
-        createdAt: user.createdAt,
-        followerCount,
-        followingCount,
-        isFollowing,
-        activeStream: activeStream || null
-      });
-    } catch (error) {
-      console.error('Get user profile error:', error);
-      res.status(500).json({ message: 'Failed to fetch user profile' });
-    }
-  },
-  
-  // Update user profile
-  updateProfile: async (req: Request, res: Response): Promise<void> => {
-    try {
-      if (!req.user) {
-        res.status(401).json({ message: 'Authentication required' });
-        return;
-      }
-      
-      const { bio, avatarUrl } = req.body;
-      
-      const user = await UserModel.findByPk(req.user.id);
-      
-      if (!user) {
-        res.status(404).json({ message: 'User not found' });
-        return;
-      }
-      
-      // Update fields if provided
-      if (bio !== undefined) user.bio = bio;
-      if (avatarUrl !== undefined) user.avatarUrl = avatarUrl;
-      
-      await user.save();
-      
-      res.status(200).json({
+
+      res.json({
         id: user.id,
         username: user.username,
         email: user.email,
-        avatarUrl: user.avatarUrl,
-        bio: user.bio,
-        isStreamer: user.isStreamer
+        isStreamer: user.isStreamer,
+        isAdmin: user.isAdmin,
+        avatarUrl: user.avatarUrl
       });
     } catch (error) {
-      console.error('Update profile error:', error);
-      res.status(500).json({ message: 'Failed to update profile' });
+      console.error('Error getting user profile:', error);
+      res.status(500).json({ error: 'Failed to get user profile' });
     }
-  },
-  
-  // Upgrade to streamer
-  upgradeToStreamer: async (req: Request, res: Response): Promise<void> => {
+  }
+
+  // Update user profile
+  async updateProfile(req: Request, res: Response): Promise<void> {
     try {
-      if (!req.user) {
-        res.status(401).json({ message: 'Authentication required' });
+      if (!req.user?.id) {
+        res.status(401).json({ error: 'Not authenticated' });
         return;
       }
-      
-      const user = await UserModel.findByPk(req.user.id);
-      
+
+      const { username, email, avatarUrl } = req.body;
+      const userRepository = AppDataSource.getRepository(User);
+      const user = await userRepository.findOne({ where: { id: req.user.id } });
+
       if (!user) {
-        res.status(404).json({ message: 'User not found' });
+        res.status(404).json({ error: 'User not found' });
         return;
       }
-      
+
+      // Update fields if provided
+      if (username) user.username = username;
+      if (email) user.email = email;
+      if (avatarUrl) user.avatarUrl = avatarUrl;
+
+      await userRepository.save(user);
+
+      res.json({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        isStreamer: user.isStreamer,
+        isAdmin: user.isAdmin,
+        avatarUrl: user.avatarUrl
+      });
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      res.status(500).json({ error: 'Failed to update user profile' });
+    }
+  }
+
+  // Upgrade to streamer
+  async upgradeToStreamer(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user?.id) {
+        res.status(401).json({ error: 'Not authenticated' });
+        return;
+      }
+
+      const userRepository = AppDataSource.getRepository(User);
+      const user = await userRepository.findOne({ where: { id: req.user.id } });
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
       if (user.isStreamer) {
-        res.status(400).json({ message: 'User is already a streamer' });
+        res.status(400).json({ error: 'User is already a streamer' });
         return;
       }
-      
-      // Upgrade to streamer
+
       user.isStreamer = true;
-      user.streamKey = user.generateStreamKey();
-      await user.save();
-      
-      res.status(200).json({
+      user.streamKey = uuidv4();
+      await userRepository.save(user);
+
+      res.json({
         id: user.id,
         username: user.username,
         isStreamer: user.isStreamer,
         streamKey: user.streamKey
       });
     } catch (error) {
-      console.error('Upgrade to streamer error:', error);
-      res.status(500).json({ message: 'Failed to upgrade to streamer' });
+      console.error('Error upgrading to streamer:', error);
+      res.status(500).json({ error: 'Failed to upgrade to streamer' });
     }
-  },
-  
+  }
+
   // Follow a user
-  followUser: async (req: Request, res: Response): Promise<void> => {
+  async followUser(req: Request, res: Response): Promise<void> {
     try {
-      if (!req.user) {
-        res.status(401).json({ message: 'Authentication required' });
+      if (!req.user?.id) {
+        res.status(401).json({ error: 'Not authenticated' });
         return;
       }
-      
+
       const { username } = req.params;
-      
-      // Get the user to follow
-      const userToFollow = await UserModel.findOne({
-        where: { username }
-      });
-      
+      const userRepository = AppDataSource.getRepository(User);
+      const followRepository = AppDataSource.getRepository(Follow);
+
+      const userToFollow = await userRepository.findOne({ where: { username } });
+
       if (!userToFollow) {
-        res.status(404).json({ message: 'User not found' });
+        res.status(404).json({ error: 'User not found' });
         return;
       }
-      
-      // Check if already following
-      const existingFollow = await FollowModel.findOne({
+
+      if (userToFollow.id === req.user.id) {
+        res.status(400).json({ error: 'Cannot follow yourself' });
+        return;
+      }
+
+      const existingFollow = await followRepository.findOne({
         where: {
           followerId: req.user.id,
           followingId: userToFollow.id
         }
       });
-      
+
       if (existingFollow) {
-        res.status(400).json({ message: 'Already following this user' });
+        res.status(400).json({ error: 'Already following this user' });
         return;
       }
-      
-      // Create follow relationship
-      await FollowModel.create({
+
+      const follow = followRepository.create({
         followerId: req.user.id,
         followingId: userToFollow.id
       });
-      
-      res.status(200).json({
-        message: `Now following ${userToFollow.username}`,
-        following: true
-      });
-    } catch (error) {
-      console.error('Follow user error:', error);
-      res.status(500).json({ message: 'Failed to follow user' });
-    }
-  },
-  
-  // Unfollow a user
-  unfollowUser: async (req: Request, res: Response): Promise<void> => {
-    try {
-      if (!req.user) {
-        res.status(401).json({ message: 'Authentication required' });
-        return;
-      }
-      
-      const { username } = req.params;
-      
-      // Get the user to unfollow
-      const userToUnfollow = await UserModel.findOne({
-        where: { username }
-      });
-      
-      if (!userToUnfollow) {
-        res.status(404).json({ message: 'User not found' });
-        return;
-      }
-      
-      // Delete follow relationship
-      const deleted = await FollowModel.destroy({
-        where: {
-          followerId: req.user.id,
-          followingId: userToUnfollow.id
+
+      await followRepository.save(follow);
+
+      res.json({
+        message: `Now following ${username}`,
+        following: {
+          id: userToFollow.id,
+          username: userToFollow.username
         }
       });
-      
-      if (deleted === 0) {
-        res.status(400).json({ message: 'Not following this user' });
+    } catch (error) {
+      console.error('Error following user:', error);
+      res.status(500).json({ error: 'Failed to follow user' });
+    }
+  }
+
+  // Unfollow a user
+  async unfollowUser(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user?.id) {
+        res.status(401).json({ error: 'Not authenticated' });
         return;
       }
-      
-      res.status(200).json({
-        message: `Unfollowed ${userToUnfollow.username}`,
-        following: false
+
+      const { username } = req.params;
+      const userRepository = AppDataSource.getRepository(User);
+      const followRepository = AppDataSource.getRepository(Follow);
+
+      const userToUnfollow = await userRepository.findOne({ where: { username } });
+
+      if (!userToUnfollow) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      const result = await followRepository.delete({
+        followerId: req.user.id,
+        followingId: userToUnfollow.id
+      });
+
+      if (result.affected === 0) {
+        res.status(400).json({ error: 'Not following this user' });
+        return;
+      }
+
+      res.json({
+        message: `Unfollowed ${username}`
       });
     } catch (error) {
-      console.error('Unfollow user error:', error);
-      res.status(500).json({ message: 'Failed to unfollow user' });
+      console.error('Error unfollowing user:', error);
+      res.status(500).json({ error: 'Failed to unfollow user' });
     }
-  },
-  
+  }
+
   // Get users the current user is following
-  getFollowing: async (req: Request, res: Response): Promise<void> => {
+  async getFollowing(req: Request, res: Response): Promise<void> {
     try {
       if (!req.user) {
         res.status(401).json({ message: 'Authentication required' });
         return;
       }
       
-      const follows = await FollowModel.findAll({
+      const userRepository = AppDataSource.getRepository(User);
+      const follows = await AppDataSource.getRepository(Follow).find({
         where: { followerId: req.user.id },
-        include: [{
-          model: User,
-          as: 'following',
-          attributes: ['id', 'username', 'avatarUrl', 'isStreamer']
-        }]
+        relations: ['following']
       });
       
       // Extract the user objects from follows
-      const following = follows.map((follow: any) => follow.get({ plain: true }).following);
+      const following = follows.map((follow: any) => follow.following);
       
       res.status(200).json(following);
     } catch (error) {
@@ -264,4 +227,4 @@ export default {
       res.status(500).json({ message: 'Failed to fetch following users' });
     }
   }
-}; 
+} 

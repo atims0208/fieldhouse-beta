@@ -1,126 +1,90 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { User } from '../models';
+import { AppDataSource } from '../config/database';
+import { User } from '../models/user.model';
 
 // Extend Express Request interface to include user property
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        id: string;
-        username: string;
-        email: string;
-        isStreamer: boolean;
-        isAdmin: boolean;
-      };
+      user?: User;
     }
   }
 }
 
-// JWT token interface
-interface JwtPayload {
-  id: string;
-  username: string;
-  email: string;
-  isStreamer: boolean;
-  isAdmin: boolean;
-}
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // Authentication middleware
-export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
   try {
-    // Get token from header
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({ message: 'No token provided, authorization denied' });
-      return;
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
     }
-    
-    const token = authHeader.split(' ')[1];
-    
-    // Verify token
-    const secret = process.env.JWT_SECRET || 'fieldhouse_secret_key_change_in_production';
-    const decoded = jwt.verify(token, secret) as JwtPayload;
-    
-    // Add user to request
-    req.user = {
-      id: decoded.id,
-      username: decoded.username,
-      email: decoded.email,
-      isStreamer: decoded.isStreamer,
-      isAdmin: decoded.isAdmin
-    };
-    
+
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
+    const userRepository = AppDataSource.getRepository(User);
+    const user = await userRepository.findOne({ where: { id: decoded.id } });
+
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Token is invalid or expired' });
+    console.error('Auth middleware error:', error);
+    return res.status(401).json({ error: 'Invalid token' });
   }
 };
 
 // Optional authentication middleware (won't reject if no token)
-export const optionalAuth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const optionalAuth = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
   try {
-    // Get token from header
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      // Continue without authentication if no token
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
       next();
       return;
     }
-    
-    const token = authHeader.split(' ')[1];
-    
-    // Verify token
-    const secret = process.env.JWT_SECRET || 'fieldhouse_secret_key_change_in_production';
-    const decoded = jwt.verify(token, secret) as JwtPayload;
-    
-    // Add user to request
-    req.user = {
-      id: decoded.id,
-      username: decoded.username,
-      email: decoded.email,
-      isStreamer: decoded.isStreamer,
-      isAdmin: decoded.isAdmin
-    };
-    
+
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
+    const userRepository = AppDataSource.getRepository(User);
+    const user = await userRepository.findOne({ where: { id: decoded.id } });
+
+    if (user) {
+      req.user = user;
+    }
     next();
   } catch (error) {
-    // Continue without authentication if token is invalid
     next();
   }
 };
 
 // Streamer required middleware
-export const requireStreamer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const requireStreamer = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
   if (!req.user) {
-    res.status(401).json({ message: 'Authentication required' });
-    return;
+    return res.status(401).json({ message: 'Authentication required' });
   }
   
   if (!req.user.isStreamer) {
-    res.status(403).json({ message: 'Streamer privileges required' });
-    return;
+    return res.status(403).json({ message: 'Streamer privileges required' });
   }
   
   next();
 };
 
 // Admin required middleware
-export const requireAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  // First, ensure the user is authenticated
+export const requireAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
   if (!req.user) {
-    res.status(401).json({ message: 'Authentication required' });
-    return;
+    return res.status(401).json({ message: 'Authentication required' });
   }
   
-  // Then, check if the authenticated user is an admin
   if (!req.user.isAdmin) {
-    res.status(403).json({ message: 'Admin privileges required' });
-    return;
+    return res.status(403).json({ message: 'Admin privileges required' });
   }
   
-  // If authenticated and admin, proceed
   next();
-}; 
+};
+
+// Export the main auth middleware as default
+export const authMiddleware = authenticate; 

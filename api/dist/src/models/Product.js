@@ -10,99 +10,38 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Product = void 0;
-const sequelize_typescript_1 = require("sequelize-typescript");
+const typeorm_1 = require("typeorm");
 const User_1 = require("./User");
-let Product = class Product extends sequelize_typescript_1.Model {
-    static async beforeProductCreate(instance) {
-    }
-    static async beforeProductUpdate(instance) {
-    }
+let Product = class Product {
 };
 exports.Product = Product;
 __decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.UUID,
-        defaultValue: sequelize_typescript_1.DataType.UUIDV4,
-        primaryKey: true,
-    }),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
     __metadata("design:type", String)
 ], Product.prototype, "id", void 0);
 __decorate([
-    (0, sequelize_typescript_1.ForeignKey)(() => User_1.User),
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.UUID,
-        allowNull: false,
-    }),
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], Product.prototype, "userId", void 0);
+], Product.prototype, "name", void 0);
 __decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.STRING,
-        allowNull: false,
-    }),
-    __metadata("design:type", String)
-], Product.prototype, "title", void 0);
-__decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.TEXT,
-        allowNull: false,
-    }),
+    (0, typeorm_1.Column)('text'),
     __metadata("design:type", String)
 ], Product.prototype, "description", void 0);
 __decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.DECIMAL(10, 2),
-        allowNull: false,
-    }),
+    (0, typeorm_1.Column)('decimal', { precision: 10, scale: 2 }),
     __metadata("design:type", Number)
 ], Product.prototype, "price", void 0);
 __decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.ARRAY(sequelize_typescript_1.DataType.STRING),
-        allowNull: false,
-        validate: {
-            maxImages(value) {
-                if (value && value.length > 5) {
-                    throw new Error('Maximum 5 images allowed');
-                }
-            }
-        }
-    }),
-    __metadata("design:type", Array)
-], Product.prototype, "images", void 0);
-__decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.BOOLEAN,
-        defaultValue: true,
-    }),
-    __metadata("design:type", Boolean)
-], Product.prototype, "isAvailable", void 0);
-__decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.STRING,
-        allowNull: true,
-    }),
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], Product.prototype, "category", void 0);
+], Product.prototype, "sellerId", void 0);
 __decorate([
-    (0, sequelize_typescript_1.BeforeCreate)({
-        name: 'beforeProductCreate'
-    }),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Product]),
-    __metadata("design:returntype", Promise)
-], Product, "beforeProductCreate", null);
-__decorate([
-    (0, sequelize_typescript_1.BeforeUpdate)({
-        name: 'beforeProductUpdate'
-    }),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Product]),
-    __metadata("design:returntype", Promise)
-], Product, "beforeProductUpdate", null);
+    (0, typeorm_1.ManyToOne)(() => User_1.User, user => user.products),
+    (0, typeorm_1.JoinColumn)({ name: 'sellerId' }),
+    __metadata("design:type", User_1.User)
+], Product.prototype, "seller", void 0);
 exports.Product = Product = __decorate([
-    (0, sequelize_typescript_1.Table)({
-        tableName: 'products',
-    })
+    (0, typeorm_1.Entity)()
 ], Product);
+exports.default = Product;
 //# sourceMappingURL=Product.js.map

@@ -15,24 +15,27 @@ try {
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: [
-      'localhost',
-      'api.fieldhouse.example.com',
-      'fieldhouse-beta-2024-api.ondigitalocean.app',
-      'files.stripe.com'
-    ]
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'vz-4f8c314d-49b.b-cdn.net',
+        pathname: '/**',
+      },
+    ],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
   typescript: {
-    // !! WARN !!
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
-    // !! WARN !!
-    ignoreBuildErrors: true,
+    // Enable type checking in production builds
+    ignoreBuildErrors: process.env.SKIP_TYPE_CHECK === 'true',
   },
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
+    // Enable ESLint checking in production builds
+    ignoreDuringBuilds: process.env.SKIP_TYPE_CHECK === 'true',
   },
   experimental: {
     webpackBuildWorker: true,
@@ -48,7 +51,8 @@ const nextConfig = {
       ignored: [...(config.watchOptions?.ignored || []), '**/api/**']
     };
     return config;
-  }
+  },
+  output: 'standalone',
 }
 
 if (userConfig) {

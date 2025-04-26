@@ -1,11 +1,12 @@
 import express from 'express';
-import userController from '../controllers/userController';
+import { UserController } from '../controllers/userController';
 import { authenticate, optionalAuth } from '../middleware/auth';
 
 const router = express.Router();
+const userController = new UserController();
 
 // Get user profile by username (public)
-router.get('/profile/:username', optionalAuth, userController.getUserProfile);
+router.get('/profile/:username', optionalAuth, userController.getProfile);
 
 // Update user profile (authenticated)
 router.put('/profile', authenticate, userController.updateProfile);

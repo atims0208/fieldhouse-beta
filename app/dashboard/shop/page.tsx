@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Plus, Pencil, Trash2, ShoppingBag, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, ShoppingBag, Search, Settings } from 'lucide-react'
 import { productAPI } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
@@ -169,10 +169,20 @@ export default function ShopDashboardPage() {
           <ShoppingBag className="mr-3 h-8 w-8" />
           <h1 className="text-3xl font-bold">Shop Dashboard</h1>
         </div>
-        <Button onClick={handleCreateProduct} className="w-full sm:w-auto">
-          <Plus className="mr-2 h-4 w-4" />
-          Add New Product
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button onClick={handleCreateProduct} className="flex-1 sm:flex-none">
+            <Plus className="mr-2 h-4 w-4" />
+            Add New Product
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => router.push('/dashboard/shop/settings')}
+            className="flex-1 sm:flex-none"
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </Button>
+        </div>
       </div>
       
       <div className="mb-6">

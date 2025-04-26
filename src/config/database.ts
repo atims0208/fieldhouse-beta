@@ -1,18 +1,31 @@
-import { Sequelize } from 'sequelize';
+import { DataSource } from 'typeorm';
+import { User } from '../models/User';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const sequelize = new Sequelize(process.env.DATABASE_URL!, {
-  dialect: 'postgres',
-  logging: process.env.NODE_ENV === 'development' ? console.log : false,
-  ssl: process.env.NODE_ENV === 'production',
-  dialectOptions: {
-    ssl: process.env.NODE_ENV === 'production' ? {
-      require: true,
-      rejectUnauthorized: false
-    } : false
-  }
+export const AppDataSource = new DataSource({
+  type: 'postgres',
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT || '5432'),
+  username: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  synchronize: process.env.NODE_ENV !== 'production',
+  logging: process.env.NODE_ENV !== 'production',
+  entities: [User],
+  migrations: [],
+  subscribers: [],
 });
 
-export default sequelize; 
+export const initializeDatabase = async () => {
+  try {
+    await AppDataSource.initialize();
+    console.log('Database connection established successfully');
+  } catch (error) {
+    console.error('Error connecting to database:', error);
+    throw error;
+  }
+};
+
+export default AppDataSource; 

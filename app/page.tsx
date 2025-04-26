@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -9,10 +11,10 @@ export default function Home() {
   const featuredStream = {
     id: "featured-1",
     title: "Championship Finals - Team Alpha vs Team Omega",
-    thumbnail: "/placeholder.svg?height=720&width=1280",
+    thumbnail: "/placeholder.svg",
     streamer: {
       username: "OfficialFHSB",
-      avatar: "/placeholder.svg?height=200&width=200",
+      avatar: "/placeholder.svg",
     },
     category: "Basketball",
     viewerCount: 15420,
@@ -24,10 +26,10 @@ export default function Home() {
     {
       id: "stream-1",
       title: "Regional Qualifiers - East Division",
-      thumbnail: "/placeholder.svg?height=720&width=1280",
+      thumbnail: "/placeholder.svg",
       streamer: {
         username: "SportsCenter",
-        avatar: "/placeholder.svg?height=200&width=200",
+        avatar: "/placeholder.svg",
       },
       category: "Basketball",
       viewerCount: 8754,
@@ -36,10 +38,10 @@ export default function Home() {
     {
       id: "stream-2",
       title: "Weekly Tournament Series - Round 4",
-      thumbnail: "/placeholder.svg?height=720&width=1280",
+      thumbnail: "/placeholder.svg",
       streamer: {
         username: "GameDay",
-        avatar: "/placeholder.svg?height=200&width=200",
+        avatar: "/placeholder.svg",
       },
       category: "Football",
       viewerCount: 6231,
@@ -48,10 +50,10 @@ export default function Home() {
     {
       id: "stream-3",
       title: "College Showcase - Top Prospects",
-      thumbnail: "/placeholder.svg?height=720&width=1280",
+      thumbnail: "/placeholder.svg",
       streamer: {
         username: "RecruitingLive",
-        avatar: "/placeholder.svg?height=200&width=200",
+        avatar: "/placeholder.svg",
       },
       category: "Baseball",
       viewerCount: 4102,
@@ -60,10 +62,10 @@ export default function Home() {
     {
       id: "stream-4",
       title: "Pro Analysis - Breaking Down the Playoffs",
-      thumbnail: "/placeholder.svg?height=720&width=1280",
+      thumbnail: "/placeholder.svg",
       streamer: {
         username: "AnalyticsHub",
-        avatar: "/placeholder.svg?height=200&width=200",
+        avatar: "/placeholder.svg",
       },
       category: "Analysis",
       viewerCount: 3578,
@@ -128,37 +130,37 @@ export default function Home() {
     {
       id: "cat-1",
       name: "Basketball",
-      image: "/placeholder.svg?height=300&width=240",
+      image: "/placeholder.svg",
       viewerCount: 45230,
     },
     {
       id: "cat-2",
       name: "Football",
-      image: "/placeholder.svg?height=300&width=240",
+      image: "/placeholder.svg",
       viewerCount: 38750,
     },
     {
       id: "cat-3",
       name: "Baseball",
-      image: "/placeholder.svg?height=300&width=240",
+      image: "/placeholder.svg",
       viewerCount: 21540,
     },
     {
       id: "cat-4",
       name: "Soccer",
-      image: "/placeholder.svg?height=300&width=240",
+      image: "/placeholder.svg",
       viewerCount: 19870,
     },
     {
       id: "cat-5",
       name: "Volleyball",
-      image: "/placeholder.svg?height=300&width=240",
+      image: "/placeholder.svg",
       viewerCount: 12450,
     },
     {
       id: "cat-6",
       name: "Hockey",
-      image: "/placeholder.svg?height=300&width=240",
+      image: "/placeholder.svg",
       viewerCount: 9870,
     },
   ]
@@ -169,11 +171,13 @@ export default function Home() {
       <section className="relative overflow-hidden rounded-xl border border-fhsb-green/30">
         <div className="relative aspect-[21/9] md:aspect-[21/7] w-full">
           <Image
-            src={featuredStream.thumbnail || "/placeholder.svg"}
+            src={featuredStream.thumbnail}
             alt={featuredStream.title}
             fill
             className="object-cover"
             priority
+            sizes="100vw"
+            style={{ width: '100%', height: '100%' }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
@@ -185,11 +189,12 @@ export default function Home() {
             <h1 className="text-xl md:text-3xl font-bold text-white mb-2">{featuredStream.title}</h1>
             <div className="flex items-center gap-2 mb-4">
               <Image
-                src={featuredStream.streamer.avatar || "/placeholder.svg"}
+                src={featuredStream.streamer.avatar}
                 alt={featuredStream.streamer.username}
                 width={24}
                 height={24}
                 className="rounded-full"
+                style={{ width: '24px', height: '24px' }}
               />
               <span className="text-sm text-white">{featuredStream.streamer.username}</span>
               <span className="text-sm text-white/70">• {featuredStream.category}</span>

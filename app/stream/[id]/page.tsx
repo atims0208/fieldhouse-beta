@@ -4,6 +4,12 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials } from "@/lib/utils"
+import { GiftShop } from '@/components/gift-shop'
+import { GiftAnimation } from '@/components/gift-animation'
+import { useSocket } from '@/hooks/use-socket'
+import { Gift } from '@/lib/types'
+import { useAuth } from '@/contexts/AuthContext'
+import { GiftAnimationEffects } from '@/components/gift-animation-effects'
 
 interface Stream {
   id: string
@@ -16,8 +22,15 @@ interface Stream {
   isLive: boolean
 }
 
-export default function StreamPage() {
+export default function StreamPage({ params }: { params: { id: string } }) {
+  const { user } = useAuth()
   const [stream, setStream] = useState<Stream | null>(null)
+  const [giftAnimation, setGiftAnimation] = useState<{
+    gift: Gift;
+    sender: { username: string };
+    quantity: number;
+  } | null>(null)
+  const socket = useSocket()
 
   // TODO: Fetch stream data based on ID
   useEffect(() => {
@@ -34,7 +47,55 @@ export default function StreamPage() {
     }
     setStream(mockStream)
   }, [])
-  
+
+  useEffect(() => {
+    if (!socket) return
+
+    socket.on('gift_received', (data: {
+      gift: Gift;
+      sender: { username: string };
+      quantity: number;
+    }) => {
+      setGiftAnimation(data)
+    })
+
+    return () => {
+      socket.off('gift_received')
+    }
+  }, [socket])
+
+  const handleGiftSelect = async (gift: Gift, quantity: number) => {
+    try {
+      const response = await fetch('/api/gifts/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          giftId: gift.id,
+          streamId: params.id,
+          quantity
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to send gift')
+      }
+
+      // Socket will handle the animation for all viewers
+      socket.emit('send_gift', {
+        gift,
+        sender: { username: user?.username },
+        quantity,
+        streamId: params.id
+      })
+    } catch (error) {
+      console.error('Failed to send gift:', error)
+      // Show error toast
+    }
+  }
+
   if (!stream) {
     return <div>Loading...</div>
   }
@@ -90,6 +151,21 @@ export default function StreamPage() {
           </div>
         </div>
       </div>
+
+      {/* Gift shop */}
+      <div className="fixed bottom-4 right-4 w-64">
+        <GiftShop onGiftSelect={handleGiftSelect} />
+      </div>
+
+      {/* Gift animation */}
+      {giftAnimation && (
+        <GiftAnimationEffects
+          gift={giftAnimation.gift}
+          sender={giftAnimation.sender}
+          quantity={giftAnimation.quantity}
+          onComplete={() => setGiftAnimation(null)}
+        />
+      )}
     </div>
   )
 }

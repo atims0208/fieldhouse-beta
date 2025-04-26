@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { Product, User } from '../models';
-import sequelize from '../config/database';
 
 // Type assertions for models
 const ProductModel = Product as any;
@@ -203,12 +202,12 @@ export default {
     }
   },
   
-  // Get products by user (seller)
+  // Get products by user
   getProductsByUser: async (req: Request, res: Response): Promise<void> => {
     try {
       const { username } = req.params;
       
-      // Find the user
+      // Find user
       const user = await UserModel.findOne({
         where: { username }
       });
@@ -224,17 +223,22 @@ export default {
           userId: user.id,
           isAvailable: true
         },
-        order: [['createdAt', 'DESC']]
+        order: [['createdAt', 'DESC']],
+        include: [{
+          model: User,
+          as: 'seller',
+          attributes: ['id', 'username', 'avatarUrl']
+        }]
       });
       
       res.status(200).json(products);
     } catch (error) {
       console.error('Get products by user error:', error);
-      res.status(500).json({ message: 'Failed to fetch user products' });
+      res.status(500).json({ message: 'Failed to fetch products' });
     }
   },
-
-  // Get current user's products (for dashboard)
+  
+  // Get my products (for authenticated user)
   getMyProducts: async (req: Request, res: Response): Promise<void> => {
     try {
       if (!req.user) {
@@ -242,18 +246,20 @@ export default {
         return;
       }
       
-      // Get all user's products including unavailable ones
       const products = await ProductModel.findAll({
-        where: {
-          userId: req.user.id
-        },
-        order: [['createdAt', 'DESC']]
+        where: { userId: req.user.id },
+        order: [['createdAt', 'DESC']],
+        include: [{
+          model: User,
+          as: 'seller',
+          attributes: ['id', 'username', 'avatarUrl']
+        }]
       });
       
       res.status(200).json(products);
     } catch (error) {
       console.error('Get my products error:', error);
-      res.status(500).json({ message: 'Failed to fetch your products' });
+      res.status(500).json({ message: 'Failed to fetch products' });
     }
   }
 }; 

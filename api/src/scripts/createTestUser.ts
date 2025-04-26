@@ -1,36 +1,43 @@
-import { User } from '../models';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import { AppDataSource } from '../config/database';
+import { User } from '../models/User';
+import bcrypt from 'bcryptjs';
 
 async function createTestUser() {
   try {
-    // Create or update test user
-    const [user, created] = await User.findOrCreate({
-      where: { email: 'itsthealvin@gmail.com' },
-      defaults: {
-        username: 'itsthealvin',
-        email: 'itsthealvin@gmail.com',
-        password: 'test123',
-        isAdmin: true,
-        isStreamer: true
-      }
+    await AppDataSource.initialize();
+    const userRepository = AppDataSource.getRepository(User);
+    
+    // Check if test user exists
+    const existingUser = await userRepository.findOne({
+      where: { email: 'test@example.com' }
     });
 
-    if (!created) {
-      // Update existing user
-      user.isAdmin = true;
-      user.isStreamer = true;
-      user.password = 'test123';
-      await user.save();
-      console.log('Test user updated:', user.toJSON());
-    } else {
-      console.log('Test user created:', user.toJSON());
+    if (existingUser) {
+      console.log('Test user already exists');
+      return existingUser;
     }
 
+    // Create test user
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash('password123', salt);
+
+    const user = userRepository.create({
+      username: 'testuser',
+      email: 'test@example.com',
+      password: hashedPassword,
+      isAdmin: true,
+      isStreamer: true
+    });
+
+    await userRepository.save(user);
+    console.log('Test user created successfully');
+    return user;
   } catch (error) {
-    console.error('Failed to create test user:', error);
+    console.error('Error creating test user:', error);
+    throw error;
   }
 }
 
-createTestUser(); 
+createTestUser()
+  .then(() => process.exit(0))
+  .catch(() => process.exit(1)); 

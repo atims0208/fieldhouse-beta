@@ -1,39 +1,37 @@
 import { Router } from 'express';
-import { AdminController } from '../controllers/admin.controller';
-import { authenticate, requireAdmin } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
+import adminController from '../controllers/admin.controller';
+import { AppDataSource } from '../config/database';
 import { User } from '../models/User';
 
 const router = Router();
 
-// Middleware to check if user is admin
+// Admin middleware
 const isAdmin = async (req: any, res: any, next: any) => {
   try {
-    const user = await User.findByPk(req.user.id);
-    if (!user?.isAdmin) {
-      return res.status(403).json({ error: 'Access denied. Admin privileges required.' });
+    const userRepository = AppDataSource.getRepository(User);
+    const user = await userRepository.findOne({ where: { id: req.user.id } });
+    
+    if (!user || !user.isAdmin) {
+      return res.status(403).json({ error: 'Access denied' });
     }
     next();
   } catch (error) {
-    res.status(500).json({ error: 'Failed to verify admin status' });
+    res.status(500).json({ error: 'Error checking admin status' });
   }
 };
 
-// Apply authentication and admin check middleware to all routes
-router.use(authenticate, requireAdmin);
+// Apply authentication and admin middleware to all routes
+router.use(authenticate, isAdmin);
 
-// User management routes
-router.get('/users', AdminController.getAllUsers);
-router.patch('/users/:userId/status', AdminController.updateUserStatus);
+// User management
+router.get('/users', adminController.getUsers);
+router.post('/users/:userId/ban', adminController.banUser);
+router.post('/users/:userId/unban', adminController.unbanUser);
+router.post('/users/make-admin', adminController.updateUserAdminStatus);
 
-// Stream management routes
-router.get('/streams/active', AdminController.getActiveStreams);
-router.post('/streams/:streamId/end', AdminController.endStream);
-
-// Streamer request management routes
-router.get('/streamer-requests', AdminController.getStreamerRequests);
-router.post('/streamer-requests/:userId', AdminController.handleStreamerRequest);
-
-// Statistics route
-router.get('/statistics', AdminController.getStatistics);
+// Stream management
+router.get('/streams', adminController.getStreams);
+router.delete('/streams/:streamId', adminController.deleteStream);
 
 export default router; 

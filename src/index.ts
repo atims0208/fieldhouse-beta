@@ -1,41 +1,42 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import sequelize from './config/database';
-import authRoutes from './routes/auth.routes';
 import helmet from 'helmet';
+import { initializeDatabase } from './config/database';
+import authRoutes from './routes/auth.routes';
 
 dotenv.config();
 
 const app = express();
+const port = process.env.PORT || 4000;
 
-// Security middleware
+// Middleware
 app.use(helmet());
-
-// CORS configuration
-const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'];
 app.use(cors({
-  origin: (origin, callback) => {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    const allowedOrigins = [
+      process.env.CORS_ORIGIN || 'http://localhost:3000',
+      'http://localhost:3000',
+      'https://fieldhouse-beta-2024.vercel.app'
+    ];
+
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
-
 app.use(express.json());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'healthy' });
+  res.json({ status: 'healthy' });
 });
 
 // Routes
-app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -43,24 +44,17 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   res.status(500).json({ message: 'Internal server error' });
 });
 
-// Database connection and server start
-const PORT = process.env.PORT || 4000;
-
-const start = async () => {
+const startServer = async () => {
   try {
-    await sequelize.authenticate();
-    console.log('Database connected successfully');
-
-    await sequelize.sync();
-    console.log('Database synchronized');
-
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+    await initializeDatabase();
+    
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
     });
   } catch (error) {
-    console.error('Unable to start the server:', error);
+    console.error('Failed to start server:', error);
     process.exit(1);
   }
 };
 
-start(); 
+startServer(); 

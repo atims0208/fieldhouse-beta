@@ -1,156 +1,174 @@
 import { Request, Response } from 'express';
+import { AppDataSource } from '../config/database';
 import { User } from '../models/User';
 import { Stream } from '../models/Stream';
-import { Op } from 'sequelize';
+import { ILike } from 'typeorm';
 
 export class AdminController {
   // Get all users with pagination
-  static async getAllUsers(req: Request, res: Response) {
+  async getUsers(req: Request, res: Response): Promise<void> {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
-      const offset = (page - 1) * limit;
+      const search = req.query.search as string || '';
+      const skip = (page - 1) * limit;
 
-      const users = await User.findAndCountAll({
-        limit,
-        offset,
-        order: [['createdAt', 'DESC']],
-        attributes: { exclude: ['password'] }
+      const userRepository = AppDataSource.getRepository(User);
+      const [users, total] = await userRepository.findAndCount({
+        where: [
+          { username: ILike(`%${search}%`) },
+          { email: ILike(`%${search}%`) }
+        ],
+        skip,
+        take: limit,
+        order: {
+          id: 'DESC'
+        }
       });
 
       res.json({
-        users: users.rows,
-        total: users.count,
-        currentPage: page,
-        totalPages: Math.ceil(users.count / limit)
+        users,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit)
       });
     } catch (error) {
+      console.error('Error fetching users:', error);
       res.status(500).json({ error: 'Failed to fetch users' });
     }
   }
 
-  // Update user status (ban/unban, streamer privileges)
-  static async updateUserStatus(req: Request, res: Response) {
+  // Get all streams with pagination
+  async getStreams(req: Request, res: Response): Promise<void> {
     try {
-      const { userId } = req.params;
-      const { isStreamer, isBanned, bannedUntil } = req.body;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = req.query.search as string || '';
+      const skip = (page - 1) * limit;
 
-      const user = await User.findByPk(userId);
+      const streamRepository = AppDataSource.getRepository(Stream);
+      const [streams, total] = await streamRepository.findAndCount({
+        where: [
+          { title: ILike(`%${search}%`) },
+          { description: ILike(`%${search}%`) }
+        ],
+        relations: ['user'],
+        skip,
+        take: limit,
+        order: {
+          id: 'DESC'
+        }
+      });
+
+      res.json({
+        streams,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit)
+      });
+    } catch (error) {
+      console.error('Error fetching streams:', error);
+      res.status(500).json({ error: 'Failed to fetch streams' });
+    }
+  }
+
+  // Ban a user
+  async banUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId, duration } = req.body;
+      const userRepository = AppDataSource.getRepository(User);
+      
+      const user = await userRepository.findOne({ where: { id: userId } });
       if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+        res.status(404).json({ error: 'User not found' });
+        return;
       }
 
-      await user.update({
-        isStreamer: isStreamer !== undefined ? isStreamer : user.isStreamer,
-        isBanned: isBanned !== undefined ? isBanned : user.isBanned,
-        bannedUntil: bannedUntil || null,
-        streamKey: isStreamer ? user.generateStreamKey() : null
+      const bannedUntil = duration ? new Date(Date.now() + duration * 24 * 60 * 60 * 1000) : undefined;
+      
+      await userRepository.update(userId, {
+        isBanned: true,
+        bannedUntil
       });
 
-      res.json({ message: 'User status updated successfully', user });
+      res.json({ message: 'User banned successfully' });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to update user status' });
+      console.error('Error banning user:', error);
+      res.status(500).json({ error: 'Failed to ban user' });
     }
   }
 
-  // Get all active streams
-  static async getActiveStreams(req: Request, res: Response) {
+  // Unban a user
+  async unbanUser(req: Request, res: Response): Promise<void> {
     try {
-      const streams = await Stream.findAll({
-        where: { isLive: true },
-        include: [{
-          model: User,
-          attributes: ['id', 'username', 'avatarUrl']
-        }]
+      const { userId } = req.params;
+      const userRepository = AppDataSource.getRepository(User);
+      
+      const user = await userRepository.findOne({ where: { id: userId } });
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      await userRepository.update(userId, {
+        isBanned: false,
+        bannedUntil: undefined
       });
 
-      res.json(streams);
+      res.json({ message: 'User unbanned successfully' });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch active streams' });
+      console.error('Error unbanning user:', error);
+      res.status(500).json({ error: 'Failed to unban user' });
     }
   }
 
-  // End a stream
-  static async endStream(req: Request, res: Response) {
+  // Delete a stream
+  async deleteStream(req: Request, res: Response): Promise<void> {
     try {
       const { streamId } = req.params;
+      const streamRepository = AppDataSource.getRepository(Stream);
       
-      const stream = await Stream.findByPk(streamId);
+      const stream = await streamRepository.findOne({ where: { id: streamId } });
       if (!stream) {
-        return res.status(404).json({ error: 'Stream not found' });
+        res.status(404).json({ error: 'Stream not found' });
+        return;
       }
 
-      await stream.update({
-        isLive: false,
-        endedAt: new Date()
-      });
-
-      res.json({ message: 'Stream ended successfully' });
+      await streamRepository.remove(stream);
+      res.json({ message: 'Stream deleted successfully' });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to end stream' });
+      console.error('Error deleting stream:', error);
+      res.status(500).json({ error: 'Failed to delete stream' });
     }
   }
 
-  // Get streaming requests
-  static async getStreamerRequests(req: Request, res: Response) {
+  // Update user admin status
+  async updateUserAdminStatus(req: Request, res: Response): Promise<void> {
     try {
-      const requests = await User.findAll({
-        where: {
-          isStreamer: false,
-          idDocumentUrl: { [Op.not]: null }
-        },
-        attributes: ['id', 'username', 'email', 'idDocumentUrl', 'createdAt']
-      });
-
-      res.json(requests);
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch streamer requests' });
-    }
-  }
-
-  // Approve/reject streamer request
-  static async handleStreamerRequest(req: Request, res: Response) {
-    try {
-      const { userId } = req.params;
-      const { approved } = req.body;
-
-      const user = await User.findByPk(userId);
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+      const { targetEmail } = req.body;
+      const userRepository = AppDataSource.getRepository(User);
+      
+      const userToUpdate = await userRepository.findOne({ where: { email: targetEmail } });
+      if (!userToUpdate) {
+        res.status(404).json({ error: 'User not found' });
+        return;
       }
 
-      if (approved) {
-        await user.update({
-          isStreamer: true,
-          streamKey: user.generateStreamKey()
-        });
+      let updated = false;
+      if (!userToUpdate.isAdmin) {
+        await userRepository.update(userToUpdate.id, { isAdmin: true });
+        updated = true;
       }
 
       res.json({
-        message: approved ? 'Streamer request approved' : 'Streamer request rejected',
-        user
+        message: updated ? 'User is now an admin' : 'User was already an admin',
+        user: userToUpdate
       });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to handle streamer request' });
+      console.error('Error updating user admin status:', error);
+      res.status(500).json({ error: 'Failed to update user admin status' });
     }
   }
+}
 
-  // Get system statistics
-  static async getStatistics(req: Request, res: Response) {
-    try {
-      const totalUsers = await User.count();
-      const totalStreamers = await User.count({ where: { isStreamer: true } });
-      const activeStreams = await Stream.count({ where: { isLive: true } });
-      const bannedUsers = await User.count({ where: { isBanned: true } });
-
-      res.json({
-        totalUsers,
-        totalStreamers,
-        activeStreams,
-        bannedUsers
-      });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch statistics' });
-    }
-  }
-} 
+export default new AdminController(); 

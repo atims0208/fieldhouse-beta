@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Stream, User } from '../models';
 import bunnyService from '../services/bunnyService';
-import sequelize from '../config/database';
+import { StreamStatus } from '../models/Stream';
 
 // Type assertions for models
 const StreamModel = Stream as any;
@@ -35,24 +35,12 @@ export default {
       const existingStream = await StreamModel.findOne({
         where: {
           userId: req.user.id,
-          isLive: true
+          status: StreamStatus.LIVE
         }
       });
       
       if (existingStream) {
         res.status(400).json({ message: 'You already have an active stream' });
-        return;
-      }
-      
-      // Assume createStream logic is handled or not needed if just using existing key
-      // If Bunny requires an API call even for WHIP, keep the bunnyService call
-      // For now, let's assume we just need the stream key
-      const streamKey = user.streamKey;
-      const bunnyLibraryId = process.env.BUNNY_STREAM_LIBRARY_ID; // Get Library ID from env
-      
-      if (!bunnyLibraryId) {
-        console.error('Missing BUNNY_STREAM_LIBRARY_ID environment variable');
-        res.status(500).json({ message: 'Server configuration error for streaming' });
         return;
       }
       
@@ -63,17 +51,19 @@ export default {
         description: description || '',
         category: category || '',
         tags: tags || [],
-        isLive: true
+        isLive: true,
+        status: StreamStatus.LIVE,
+        startedAt: new Date()
       });
       
       // Return stream info with RTMP URL and WHIP URL
       res.status(201).json({
         id: stream.id,
         title: stream.title,
-        isLive: stream.isLive,
-        rtmpUrl: bunnyService.getRtmpUrl(bunnyLibraryId, streamKey),
-        whipUrl: bunnyService.getWhipUrl(bunnyLibraryId, streamKey),
-        playbackUrl: bunnyService.getPlaybackUrl(bunnyLibraryId)
+        status: stream.status,
+        rtmpUrl: bunnyService.getRtmpUrl(user.streamKey),
+        whipUrl: bunnyService.getWhipUrl(user.streamKey),
+        playbackUrl: bunnyService.getPlaybackUrl(stream.id)
       });
     } catch (error) {
       console.error('Start stream error:', error);
@@ -96,7 +86,7 @@ export default {
         where: {
           id: streamId,
           userId: req.user.id,
-          isLive: true
+          status: StreamStatus.LIVE
         }
       });
       
@@ -107,16 +97,14 @@ export default {
       
       // Update stream record
       stream.isLive = false;
+      stream.status = StreamStatus.ENDED;
       stream.endedAt = new Date();
       await stream.save();
-      
-      // If bunnyStreamId is stored, you can add logic to end it in Bunny.net
-      // This may require storing the Bunny.net stream ID in your Stream model
       
       res.status(200).json({
         id: stream.id,
         title: stream.title,
-        isLive: stream.isLive,
+        status: stream.status,
         endedAt: stream.endedAt
       });
     } catch (error) {
@@ -126,10 +114,10 @@ export default {
   },
   
   // Get all active streams
-  getActiveStreams: async (req: Request, res: Response): Promise<void> => {
+  getActiveStreams: async (_req: Request, res: Response): Promise<void> => {
     try {
       const activeStreams = await StreamModel.findAll({
-        where: { isLive: true },
+        where: { status: StreamStatus.LIVE },
         include: [{
           model: User,
           as: 'user',
@@ -139,10 +127,6 @@ export default {
       });
       
       const streamsWithPlaybackUrls = activeStreams.map((stream: Stream) => {
-        // In a real implementation, you'd store and retrieve the Bunny.net stream ID
-        // For now, using a placeholder
-        const bunnyStreamId = 'placeholder'; // This should come from your database in a real implementation
-        
         return {
           id: stream.id,
           title: stream.title,
@@ -152,8 +136,9 @@ export default {
           category: stream.category,
           tags: stream.tags,
           startedAt: stream.startedAt,
+          status: stream.status,
           user: stream.user,
-          playbackUrl: bunnyService.getPlaybackUrl(bunnyStreamId)
+          playbackUrl: bunnyService.getPlaybackUrl(stream.id)
         };
       });
       
@@ -182,9 +167,6 @@ export default {
         return;
       }
       
-      // In a real implementation, you'd store and retrieve the Bunny.net stream ID
-      const bunnyStreamId = 'placeholder'; // This should come from your database
-      
       // Check if stream is actually live on Bunny.net
       // This would be useful for cases where streams end unexpectedly
       if (stream.isLive) {
@@ -199,21 +181,11 @@ export default {
       }
       
       res.status(200).json({
-        id: stream.id,
-        title: stream.title,
-        description: stream.description,
-        thumbnailUrl: stream.thumbnailUrl,
-        isLive: stream.isLive,
-        viewerCount: stream.viewerCount,
-        category: stream.category,
-        tags: stream.tags,
-        startedAt: stream.startedAt,
-        endedAt: stream.endedAt,
-        user: stream.user,
-        playbackUrl: stream.isLive ? bunnyService.getPlaybackUrl(bunnyStreamId) : null
+        ...stream.toJSON(),
+        playbackUrl: bunnyService.getPlaybackUrl(stream.id)
       });
     } catch (error) {
-      console.error('Get stream by ID error:', error);
+      console.error('Get stream error:', error);
       res.status(500).json({ message: 'Failed to fetch stream' });
     }
   },

@@ -183,13 +183,18 @@ exports.default = {
                     userId: user.id,
                     isAvailable: true
                 },
-                order: [['createdAt', 'DESC']]
+                order: [['createdAt', 'DESC']],
+                include: [{
+                        model: models_1.User,
+                        as: 'seller',
+                        attributes: ['id', 'username', 'avatarUrl']
+                    }]
             });
             res.status(200).json(products);
         }
         catch (error) {
             console.error('Get products by user error:', error);
-            res.status(500).json({ message: 'Failed to fetch user products' });
+            res.status(500).json({ message: 'Failed to fetch products' });
         }
     },
     getMyProducts: async (req, res) => {
@@ -199,16 +204,19 @@ exports.default = {
                 return;
             }
             const products = await ProductModel.findAll({
-                where: {
-                    userId: req.user.id
-                },
-                order: [['createdAt', 'DESC']]
+                where: { userId: req.user.id },
+                order: [['createdAt', 'DESC']],
+                include: [{
+                        model: models_1.User,
+                        as: 'seller',
+                        attributes: ['id', 'username', 'avatarUrl']
+                    }]
             });
             res.status(200).json(products);
         }
         catch (error) {
             console.error('Get my products error:', error);
-            res.status(500).json({ message: 'Failed to fetch your products' });
+            res.status(500).json({ message: 'Failed to fetch products' });
         }
     }
 };

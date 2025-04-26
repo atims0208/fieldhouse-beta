@@ -9,96 +9,89 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Stream = void 0;
-const sequelize_typescript_1 = require("sequelize-typescript");
+exports.Stream = exports.StreamStatus = void 0;
+const typeorm_1 = require("typeorm");
 const User_1 = require("./User");
-let Stream = class Stream extends sequelize_typescript_1.Model {
+var StreamStatus;
+(function (StreamStatus) {
+    StreamStatus["PENDING"] = "pending";
+    StreamStatus["LIVE"] = "live";
+    StreamStatus["ENDED"] = "ended";
+    StreamStatus["BANNED"] = "banned";
+})(StreamStatus || (exports.StreamStatus = StreamStatus = {}));
+let Stream = class Stream {
+    constructor() {
+        this.isLive = false;
+        this.viewerCount = 0;
+        this.status = StreamStatus.PENDING;
+    }
 };
 exports.Stream = Stream;
 __decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.UUID,
-        defaultValue: sequelize_typescript_1.DataType.UUIDV4,
-        primaryKey: true,
-    }),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
     __metadata("design:type", String)
 ], Stream.prototype, "id", void 0);
 __decorate([
-    (0, sequelize_typescript_1.ForeignKey)(() => User_1.User),
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.UUID,
-        allowNull: false,
-    }),
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], Stream.prototype, "userId", void 0);
 __decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.STRING,
-        allowNull: false,
-    }),
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], Stream.prototype, "title", void 0);
 __decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.TEXT,
-        allowNull: true,
-    }),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], Stream.prototype, "description", void 0);
 __decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.STRING,
-        allowNull: true,
-    }),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], Stream.prototype, "thumbnailUrl", void 0);
 __decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.BOOLEAN,
-        defaultValue: false,
-    }),
+    (0, typeorm_1.Column)({ default: false }),
     __metadata("design:type", Boolean)
 ], Stream.prototype, "isLive", void 0);
 __decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.INTEGER,
-        defaultValue: 0,
-    }),
+    (0, typeorm_1.Column)({ default: 0 }),
     __metadata("design:type", Number)
 ], Stream.prototype, "viewerCount", void 0);
 __decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.STRING,
-        allowNull: true,
-    }),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], Stream.prototype, "category", void 0);
 __decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.ARRAY(sequelize_typescript_1.DataType.STRING),
-        allowNull: true,
-    }),
+    (0, typeorm_1.Column)('simple-array', { nullable: true }),
     __metadata("design:type", Array)
 ], Stream.prototype, "tags", void 0);
 __decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.DATE,
-        allowNull: true,
-    }),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Date)
 ], Stream.prototype, "startedAt", void 0);
 __decorate([
-    (0, sequelize_typescript_1.Column)({
-        type: sequelize_typescript_1.DataType.DATE,
-        allowNull: true,
-    }),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Date)
 ], Stream.prototype, "endedAt", void 0);
 __decorate([
-    (0, sequelize_typescript_1.BelongsTo)(() => User_1.User),
+    (0, typeorm_1.Column)({
+        type: 'enum',
+        enum: StreamStatus,
+        default: StreamStatus.PENDING
+    }),
+    __metadata("design:type", String)
+], Stream.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => User_1.User, user => user.streams),
     __metadata("design:type", User_1.User)
 ], Stream.prototype, "user", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", Date)
+], Stream.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", Date)
+], Stream.prototype, "updatedAt", void 0);
 exports.Stream = Stream = __decorate([
-    sequelize_typescript_1.Table
+    (0, typeorm_1.Entity)()
 ], Stream);
 //# sourceMappingURL=Stream.js.map

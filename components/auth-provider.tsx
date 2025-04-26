@@ -77,7 +77,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await authAPI.login(email, password);
-      const userData = { ...response, token: response.token };
+      const userData = { ...response.user, token: response.token };
+      localStorage.setItem('token', response.token);
       setUser(userData);
       return userData;
     } catch (error) {
@@ -101,7 +102,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         dateOfBirth,
         idDocumentUrl
       );
-      const userData = { ...response, token: response.token };
+      const userData = { ...response.user, token: response.token };
+      localStorage.setItem('token', response.token);
       setUser(userData);
       return userData;
     } catch (error) {

@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 import Image from "next/image"
 import { Eye } from "lucide-react"
@@ -27,6 +29,8 @@ export default function StreamCard({ id, title, thumbnail, streamer, category, v
             alt={title}
             fill
             className="object-cover transition-transform group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            style={{ width: '100%', height: '100%' }}
           />
           {isLive && (
             <div className="absolute top-2 left-2 flex items-center gap-1">
@@ -42,7 +46,7 @@ export default function StreamCard({ id, title, thumbnail, streamer, category, v
         <div className="p-3">
           <div className="flex gap-3">
             <Avatar className="h-8 w-8 border border-fhsb-green/30">
-              <AvatarImage src={streamer.avatar} alt={streamer.username} />
+              <AvatarImage src={streamer.avatar || "/placeholder.svg"} alt={streamer.username} />
               <AvatarFallback>{getInitials(streamer.username)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 overflow-hidden">

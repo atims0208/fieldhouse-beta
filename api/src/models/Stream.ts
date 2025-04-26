@@ -1,83 +1,96 @@
 import {
-  Table,
+  Entity,
+  PrimaryGeneratedColumn,
   Column,
-  Model,
-  DataType,
-  ForeignKey,
-  BelongsTo
-} from 'sequelize-typescript';
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn
+} from 'typeorm';
 import { User } from './User';
 
-@Table
-export class Stream extends Model {
-  @Column({
-    type: DataType.UUID,
-    defaultValue: DataType.UUIDV4,
-    primaryKey: true,
-  })
-  declare id: string;
+export enum StreamType {
+  RTMP = 'rtmp',
+  WEBRTC = 'webrtc'
+}
 
-  @ForeignKey(() => User)
-  @Column({
-    type: DataType.UUID,
-    allowNull: false,
-  })
-  declare userId: string;
+export enum StreamStatus {
+  OFFLINE = 'offline',
+  LIVE = 'live',
+  ENDED = 'ended'
+}
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
-  declare title: string;
+@Entity()
+export class Stream {
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
 
-  @Column({
-    type: DataType.TEXT,
-    allowNull: true,
-  })
-  declare description: string;
+  @Column()
+  title!: string;
+
+  @Column({ type: 'text', nullable: true })
+  description?: string;
+
+  @Column({ type: 'text', nullable: true })
+  category?: string;
 
   @Column({
-    type: DataType.STRING,
-    allowNull: true,
+    type: 'enum',
+    enum: StreamType,
+    default: StreamType.RTMP
   })
-  declare thumbnailUrl: string;
+  streamType!: StreamType;
 
   @Column({
-    type: DataType.BOOLEAN,
-    defaultValue: false,
+    type: 'enum',
+    enum: StreamStatus,
+    default: StreamStatus.OFFLINE
   })
-  declare isLive: boolean;
+  status!: StreamStatus;
 
-  @Column({
-    type: DataType.INTEGER,
-    defaultValue: 0,
-  })
-  declare viewerCount: number;
+  @Column({ nullable: true })
+  thumbnailUrl?: string;
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: true,
-  })
-  declare category: string;
+  @Column({ nullable: true })
+  rtmpUrl?: string;
 
-  @Column({
-    type: DataType.ARRAY(DataType.STRING),
-    allowNull: true,
-  })
-  declare tags: string[];
+  @Column({ nullable: true })
+  playbackUrl?: string;
 
-  @Column({
-    type: DataType.DATE,
-    allowNull: true,
-  })
-  declare startedAt: Date;
+  @Column({ nullable: true })
+  streamKey?: string;
 
-  @Column({
-    type: DataType.DATE,
-    allowNull: true,
-  })
-  declare endedAt: Date;
+  // WebRTC specific fields
+  @Column({ nullable: true })
+  webrtcSessionId?: string;
 
-  @BelongsTo(() => User)
-  declare user?: User;
+  @Column({ type: 'json', nullable: true })
+  webrtcConfiguration?: {
+    iceServers: { urls: string; username?: string; credential?: string }[];
+  };
+
+  @ManyToOne(() => User, user => user.streams)
+  @JoinColumn({ name: 'userId' })
+  user!: User;
+
+  @Column()
+  userId!: string;
+
+  @Column({ type: 'int', default: 0 })
+  viewerCount: number = 0;
+
+  @Column({ type: 'json', default: [] })
+  tags: string[] = [];
+
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
+
+  @Column({ nullable: true })
+  endedAt?: Date;
+
+  @Column({ nullable: true })
+  startedAt?: Date;
 } 

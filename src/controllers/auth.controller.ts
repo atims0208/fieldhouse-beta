@@ -1,119 +1,119 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import User from '../models/User';
-import { z } from 'zod';
-import { Op } from 'sequelize';
+import { User } from '../models/User';
+import { AppDataSource } from '../config/database';
 
-const registerSchema = z.object({
-  username: z.string().min(3).max(30),
-  email: z.string().email(),
-  password: z.string().min(6),
-});
-
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
-});
+const userRepository = AppDataSource.getRepository(User);
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { username, email, password } = registerSchema.parse(req.body);
+    const { username, email, password } = req.body;
 
-    const existingUser = await User.findOne({
-      where: {
-        [Op.or]: [{ email }, { username }],
-      },
+    // Check if user already exists
+    const existingUser = await userRepository.findOne({
+      where: [{ email }, { username }]
     });
 
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({
+        message: 'User with this email or username already exists'
+      });
     }
 
-    const user = await User.create({
+    // Create new user
+    const user = userRepository.create({
       username,
       email,
-      password,
+      password
     });
 
+    await userRepository.save(user);
+
     const token = jwt.sign(
-      { id: user.id },
+      { id: user.id, username: user.username, email: user.email, isStreamer: user.isStreamer, isAdmin: user.isAdmin },
       process.env.JWT_SECRET!,
-      { expiresIn: '7d' }
+      { expiresIn: '24h' }
     );
 
-    res.status(201).json({
+    return res.status(201).json({
+      message: 'User registered successfully',
       token,
       user: {
         id: user.id,
         username: user.username,
         email: user.email,
         isStreamer: user.isStreamer,
-      },
+        isAdmin: user.isAdmin
+      }
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ errors: error.errors });
-    }
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Registration error:', error);
+    return res.status(500).json({ message: 'Error registering user' });
   }
 };
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = loginSchema.parse(req.body);
+    const { email, password } = req.body;
 
-    const user = await User.findOne({ where: { email } });
+    const user = await userRepository.findOne({
+      where: { email }
+    });
 
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const isValidPassword = await user.comparePassword(password);
 
     if (!isValidPassword) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const token = jwt.sign(
-      { id: user.id },
+      { id: user.id, username: user.username, email: user.email, isStreamer: user.isStreamer, isAdmin: user.isAdmin },
       process.env.JWT_SECRET!,
-      { expiresIn: '7d' }
+      { expiresIn: '24h' }
     );
 
-    res.json({
+    return res.json({
+      message: 'Login successful',
       token,
       user: {
         id: user.id,
         username: user.username,
         email: user.email,
         isStreamer: user.isStreamer,
-      },
+        isAdmin: user.isAdmin
+      }
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ errors: error.errors });
-    }
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Login error:', error);
+    return res.status(500).json({ message: 'Error during login' });
   }
 };
 
 export const getMe = async (req: Request, res: Response) => {
   try {
-    const user = await User.findByPk(req.user!.id);
+    const user = await userRepository.findOne({
+      where: { id: req.user!.id }
+    });
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({
+    return res.json({
       user: {
         id: user.id,
         username: user.username,
         email: user.email,
         isStreamer: user.isStreamer,
-      },
+        isAdmin: user.isAdmin
+      }
     });
   } catch (error) {
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Get user error:', error);
+    return res.status(500).json({ message: 'Error fetching user data' });
   }
 }; 

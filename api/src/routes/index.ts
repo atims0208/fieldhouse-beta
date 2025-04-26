@@ -1,30 +1,24 @@
 import { Router } from 'express';
 import authRoutes from './authRoutes';
-import userRoutes from './userRoutes';
-import streamRoutes from './streamRoutes';
-import productRoutes from './productRoutes';
 import adminRoutes from './adminRoutes';
+import streamRoutes from './streamRoutes';
+import userRoutes from './userRoutes';
+import productRoutes from './productRoutes';
+import printfulRoutes from './printful.routes';
 
 const router = Router();
 
-// API health check
-router.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'API is running' });
+// Health check
+router.get('/health', (_req, res) => {
+  res.json({ status: 'ok' });
 });
 
-// Auth routes
+// Mount routes
 router.use('/auth', authRoutes);
-
-// User routes
-router.use('/users', userRoutes);
-
-// Stream routes
-router.use('/streams', streamRoutes);
-
-// Product routes
-router.use('/products', productRoutes);
-
-// Admin routes
 router.use('/admin', adminRoutes);
+router.use('/streams', streamRoutes);
+router.use('/users', userRoutes);
+router.use('/products', productRoutes);
+router.use('/printful', printfulRoutes);
 
 export default router; 

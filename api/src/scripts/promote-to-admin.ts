@@ -1,33 +1,32 @@
-import { sequelize, User } from '../models';
+import { AppDataSource } from '../config/database';
+import { User } from '../models/User';
 
-async function makeAdmin(username: string) {
+async function promoteToAdmin(username: string) {
   try {
-    await sequelize.authenticate();
-    console.log('Connected to database successfully.');
-
-    const user = await User.findOne({ where: { username } });
+    await AppDataSource.initialize();
+    const userRepository = AppDataSource.getRepository(User);
     
+    const user = await userRepository.findOne({ where: { username } });
     if (!user) {
-      console.error(`User with username "${username}" not found.`);
+      console.error('User not found');
       process.exit(1);
     }
 
-    await user.update({ isAdmin: true });
-    console.log(`Successfully made user "${username}" an admin.`);
+    user.isAdmin = true;
+    await userRepository.save(user);
     
+    console.log(`User ${username} has been promoted to admin`);
+    process.exit(0);
   } catch (error) {
-    console.error('Error:', error);
-  } finally {
-    await sequelize.close();
+    console.error('Error promoting user:', error);
+    process.exit(1);
   }
 }
 
-// Get username from command line argument
 const username = process.argv[2];
-
 if (!username) {
-  console.error('Please provide a username as an argument.');
+  console.error('Please provide a username');
   process.exit(1);
 }
 
-makeAdmin(username); 
+promoteToAdmin(username); 

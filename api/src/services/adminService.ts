@@ -1,31 +1,43 @@
-import { User, Stream } from '../models';
-import { Op } from 'sequelize';
+import { AppDataSource } from '../config/database';
+import { User } from '../models/User';
+import { Stream, StreamStatus } from '../models/Stream';
+import { ILike } from 'typeorm';
 
 /**
  * Fetches all users (excluding admins themselves perhaps, based on requirements).
  * Includes pagination and potential filtering.
  */
 export const getAllUsers = async (page: number = 1, limit: number = 20) => {
-  const offset = (page - 1) * limit;
-  try {
-    const { count, rows } = await User.findAndCountAll({
-      // Exclude sensitive info like password, streamKey
-      attributes: {
-         exclude: ['password', 'streamKey'] 
-      },
+  const userRepository = AppDataSource.getRepository(User);
+  const skip = (page - 1) * limit;
+
+  const [users, total] = await userRepository.findAndCount({
+    // Exclude sensitive info like password, streamKey
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      avatarUrl: true,
+      isBanned: true,
+      bannedUntil: true,
+      createdAt: true,
+      updatedAt: true
+    },
+    where: {
       // Optional: Exclude admins from the list
-      // where: {
-      //   isAdmin: false
-      // },
-      limit,
-      offset,
-      order: [['createdAt', 'DESC']]
-    });
-    return { users: rows, totalUsers: count, currentPage: page, totalPages: Math.ceil(count / limit) };
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    throw new Error('Could not fetch users');
-  }
+      // isAdmin: false
+    },
+    skip,
+    take: limit,
+    order: { createdAt: 'DESC' }
+  });
+
+  return {
+    users,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit)
+  };
 };
 
 /**
@@ -35,55 +47,47 @@ export const getAllUsers = async (page: number = 1, limit: number = 20) => {
  * @param durationHours Optional duration in hours for temporary bans.
  */
 export const setUserBanStatus = async (userId: string, ban: boolean, durationHours?: number) => {
-  try {
-    const user = await User.findByPk(userId);
-    if (!user) {
-      throw new Error('User not found');
-    }
+  const userRepository = AppDataSource.getRepository(User);
+  const user = await userRepository.findOneBy({ id: userId });
 
-    // Prevent banning admins?
-    if (user.isAdmin) {
-        throw new Error('Cannot ban an admin user.');
-    }
-
-    user.isBanned = ban;
-    if (ban && durationHours && durationHours > 0) {
-      const banEndDate = new Date();
-      banEndDate.setHours(banEndDate.getHours() + durationHours);
-      user.bannedUntil = banEndDate;
-    } else {
-      user.bannedUntil = null; // Clear duration for unban or permanent ban
-    }
-    await user.save();
-    return user;
-  } catch (error) {
-    console.error('Error updating user ban status:', error);
-    if (error instanceof Error) throw error;
-    throw new Error('Could not update user ban status');
+  if (!user) {
+    throw new Error('User not found');
   }
+
+  // Prevent banning admins?
+  if (user.isAdmin) {
+    throw new Error('Cannot ban an admin user.');
+  }
+
+  const bannedUntil = ban && durationHours && durationHours > 0 ? new Date(Date.now() + durationHours * 24 * 60 * 60 * 1000) : undefined;
+  
+  user.isBanned = ban;
+  user.bannedUntil = bannedUntil;
+  await userRepository.save(user);
+
+  return user;
 };
 
 /**
  * Fetches all streams (live and past) for admin overview.
  */
 export const getAllStreams = async (page: number = 1, limit: number = 20) => {
-  const offset = (page - 1) * limit;
-  try {
-    const { count, rows } = await Stream.findAndCountAll({
-      include: [{
-        model: User,
-        as: 'user',
-        attributes: ['id', 'username', 'avatarUrl'] // Include user info
-      }],
-      limit,
-      offset,
-      order: [['createdAt', 'DESC']] // Order by creation date
-    });
-    return { streams: rows, totalStreams: count, currentPage: page, totalPages: Math.ceil(count / limit) };
-  } catch (error) {
-    console.error('Error fetching streams:', error);
-    throw new Error('Could not fetch streams');
-  }
+  const streamRepository = AppDataSource.getRepository(Stream);
+  const skip = (page - 1) * limit;
+
+  const [streams, total] = await streamRepository.findAndCount({
+    relations: ['user'],
+    skip,
+    take: limit,
+    order: { createdAt: 'DESC' }
+  });
+
+  return {
+    streams,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit)
+  };
 };
 
 /**
@@ -91,23 +95,23 @@ export const getAllStreams = async (page: number = 1, limit: number = 20) => {
  * @param streamId ID of the stream to stop.
  */
 export const stopLiveStream = async (streamId: string) => {
-  try {
-    const stream = await Stream.findOne({ where: { id: streamId, isLive: true } });
-    if (!stream) {
-      throw new Error('Live stream not found');
-    }
-    stream.isLive = false;
-    stream.endedAt = new Date();
-    await stream.save();
-    // NOTE: This does NOT necessarily stop the ingest to Bunny.net
-    // True stream termination would require Bunny API interaction if possible,
-    // or rely on the streamer stopping their software.
-    return stream;
-  } catch (error) {
-    console.error('Error stopping stream:', error);
-     if (error instanceof Error) throw error;
-    throw new Error('Could not stop stream');
+  const streamRepository = AppDataSource.getRepository(Stream);
+  const stream = await streamRepository.findOne({
+    where: { id: streamId, status: StreamStatus.LIVE }
+  });
+
+  if (!stream) {
+    throw new Error('Active stream not found');
   }
+
+  stream.status = StreamStatus.ENDED;
+  stream.endedAt = new Date();
+  await streamRepository.save(stream);
+  // NOTE: This does NOT necessarily stop the ingest to Bunny.net
+  // True stream termination would require Bunny API interaction if possible,
+  // or rely on the streamer stopping their software.
+
+  return stream;
 };
 
 /**
@@ -116,3 +120,114 @@ export const stopLiveStream = async (streamId: string) => {
  * and updating it here.
  */
 // export const updateUserBanStatus = async (userId: string, isBanned: boolean) => { ... }; 
+
+export class AdminService {
+  async getUsers(page: number, limit: number, search?: string) {
+    const userRepository = AppDataSource.getRepository(User);
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await userRepository.findAndCount({
+      where: search ? [
+        { username: ILike(`%${search}%`) },
+        { email: ILike(`%${search}%`) }
+      ] : {},
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        isAdmin: true,
+        isStreamer: true,
+        isBanned: true,
+        bannedUntil: true,
+        createdAt: true,
+        updatedAt: true
+      },
+      skip,
+      take: limit,
+      order: {
+        createdAt: 'DESC'
+      }
+    });
+
+    return {
+      users,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    };
+  }
+
+  async banUser(userId: string, duration?: number) {
+    const userRepository = AppDataSource.getRepository(User);
+    const user = await userRepository.findOneBy({ id: userId });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const bannedUntil = duration ? new Date(Date.now() + duration * 24 * 60 * 60 * 1000) : undefined;
+    
+    user.isBanned = true;
+    user.bannedUntil = bannedUntil;
+    await userRepository.save(user);
+
+    return user;
+  }
+
+  async unbanUser(userId: string) {
+    const userRepository = AppDataSource.getRepository(User);
+    const user = await userRepository.findOneBy({ id: userId });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    user.isBanned = false;
+    user.bannedUntil = null;
+    await userRepository.save(user);
+
+    return user;
+  }
+
+  async getStreams(page: number, limit: number, search?: string) {
+    const streamRepository = AppDataSource.getRepository(Stream);
+    const skip = (page - 1) * limit;
+
+    const [streams, total] = await streamRepository.findAndCount({
+      where: search ? [
+        { title: ILike(`%${search}%`) },
+        { description: ILike(`%${search}%`) }
+      ] : {},
+      relations: ['user'],
+      skip,
+      take: limit,
+      order: {
+        createdAt: 'DESC'
+      }
+    });
+
+    return {
+      streams,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    };
+  }
+
+  async stopStream(streamId: string) {
+    const streamRepository = AppDataSource.getRepository(Stream);
+    const stream = await streamRepository.findOne({
+      where: { id: streamId, status: StreamStatus.LIVE }
+    });
+
+    if (!stream) {
+      throw new Error('Active stream not found');
+    }
+
+    stream.status = StreamStatus.ENDED;
+    stream.endedAt = new Date();
+    await streamRepository.save(stream);
+
+    return stream;
+  }
+} 

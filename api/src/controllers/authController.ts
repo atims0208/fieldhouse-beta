@@ -1,149 +1,259 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { User } from '../models';
-import { Op } from 'sequelize';
+import { AppDataSource } from '../config/database';
+import { User } from '../models/User';
+import { ILike } from 'typeorm';
+import bcrypt from 'bcryptjs';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // Generate JWT token
-const generateToken = (user: any): string => {
-  const jwtSecret = process.env.JWT_SECRET || 'fieldhouse_secret_key_change_in_production';
-  
+const generateToken = (user: User): string => {
   return jwt.sign(
-    {
+    { 
       id: user.id,
       username: user.username,
       email: user.email,
       isStreamer: user.isStreamer,
       isAdmin: user.isAdmin
     },
-    jwtSecret,
-    { expiresIn: '7d' }
+    JWT_SECRET,
+    { expiresIn: '24h' }
   );
 };
 
-export default {
+export class AuthController {
   // Register a new user
-  register: async (req: Request, res: Response): Promise<void> => {
+  async register(req: Request, res: Response): Promise<void> {
     try {
-      const { username, email, password, isStreamer = false, dateOfBirth, idDocumentUrl } = req.body;
+      console.log('Registration attempt:', { ...req.body, password: '[REDACTED]' });
       
-      // Basic validation for dateOfBirth if provided
-      if (dateOfBirth && isNaN(Date.parse(dateOfBirth))) {
-        res.status(400).json({ message: 'Invalid Date of Birth format' });
-        return;
-      }
+      const { username, email, password, dateOfBirth, idDocumentUrl, isStreamer = false } = req.body;
 
-      // Basic validation for idDocumentUrl if provided
-      if (idDocumentUrl && typeof idDocumentUrl !== 'string') {
-          res.status(400).json({ message: 'Invalid ID Document URL format' });
-          return;
+      if (!username || !email || !password) {
+        console.error('Missing required fields:', { username: !!username, email: !!email, password: !!password });
+        res.status(400).json({ error: 'Missing required fields' });
+        return;
       }
 
       // Check if user already exists
-      const existingUser = await User.findOne({
-        where: {
-          [Op.or]: [
-            { username },
-            { email }
-          ]
-        }
+      console.log('Checking for existing user...');
+      const userRepository = AppDataSource.getRepository(User);
+      const existingUser = await userRepository.findOne({
+        where: [
+          { email: ILike(email) },
+          { username: ILike(username) }
+        ]
       });
-      
+
       if (existingUser) {
-        res.status(400).json({ message: 'Username or email already in use' });
+        console.log('User already exists:', { email, username });
+        res.status(400).json({ error: 'User already exists' });
         return;
       }
-      
+
+      // Hash password
+      console.log('Hashing password...');
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
       // Create new user
-      const user = await User.create({
+      console.log('Creating new user...');
+      const user = userRepository.create({
         username,
         email,
-        password,
+        password: hashedPassword,
+        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+        idDocumentUrl,
         isStreamer,
-        dateOfBirth: dateOfBirth || null,
-        idDocumentUrl: idDocumentUrl || null
+        isAdmin: false,
+        coins: 0,
+        tickets: 0
       });
-      
-      // Generate JWT token
+
+      console.log('Saving user to database...');
+      await userRepository.save(user);
+      console.log('User saved successfully:', { id: user.id, username: user.username });
+
+      // Generate token
       const token = generateToken(user);
-      
-      // Return user data and token
+
       res.status(201).json({
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        isStreamer: user.isStreamer,
-        isAdmin: user.isAdmin,
-        dateOfBirth: user.dateOfBirth,
-        idDocumentUrl: user.idDocumentUrl,
-        token
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          isStreamer: user.isStreamer,
+          isAdmin: user.isAdmin,
+          dateOfBirth: user.dateOfBirth,
+          coins: user.coins,
+          tickets: user.tickets
+        }
       });
     } catch (error) {
       console.error('Registration error:', error);
-      res.status(500).json({ message: 'Server error during registration' });
+      res.status(500).json({ error: 'Failed to register user' });
     }
-  },
-  
-  // Log in user
-  login: async (req: Request, res: Response): Promise<void> => {
-    console.log('>>> DEBUG: Entered login controller for email:', req.body?.email);
+  }
+
+  // Login user
+  async login(req: Request, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
-      
-      // Find user by email
-      const user = await User.findOne({ where: { email } });
-      
+
+      // Find user with password included
+      const userRepository = AppDataSource.getRepository(User);
+      const user = await userRepository
+        .createQueryBuilder('user')
+        .addSelect('user.password')
+        .where('LOWER(user.email) = LOWER(:email)', { email })
+        .getOne();
+
       if (!user) {
-        res.status(401).json({ message: 'Invalid credentials' });
+        res.status(401).json({ error: 'Invalid credentials' });
         return;
       }
-      
-      // Validate password
-      const isPasswordValid = await user.validPassword(password);
-      
-      if (!isPasswordValid) {
-        res.status(401).json({ message: 'Invalid credentials' });
+
+      // Check password
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        res.status(401).json({ error: 'Invalid credentials' });
         return;
       }
-      
-      // Generate JWT token
+
+      // Check if user is banned
+      if (user.isBanned) {
+        if (user.bannedUntil && user.bannedUntil > new Date()) {
+          res.status(403).json({ 
+            error: 'Account is temporarily banned',
+            bannedUntil: user.bannedUntil
+          });
+        } else {
+          res.status(403).json({ error: 'Account is permanently banned' });
+        }
+        return;
+      }
+
+      // Generate token
       const token = generateToken(user);
-      
-      // Return user data and token
-      res.status(200).json({
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        isStreamer: user.isStreamer,
-        isAdmin: user.isAdmin,
-        token
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          isStreamer: user.isStreamer,
+          isAdmin: user.isAdmin,
+          dateOfBirth: user.dateOfBirth,
+          coins: user.coins,
+          tickets: user.tickets
+        }
       });
     } catch (error) {
       console.error('Login error:', error);
-      res.status(500).json({ message: 'Server error during login' });
-    }
-  },
-  
-  // Get current user
-  getCurrentUser: async (req: Request, res: Response): Promise<void> => {
-    try {
-      if (!req.user) {
-        res.status(401).json({ message: 'Not authenticated' });
-        return;
-      }
-      
-      const user = await User.findByPk(req.user.id, {
-        attributes: ['id', 'username', 'email', 'isStreamer', 'avatarUrl', 'bio', 'isAdmin', 'createdAt']
-      });
-      
-      if (!user) {
-        res.status(404).json({ message: 'User not found' });
-        return;
-      }
-      
-      res.status(200).json(user);
-    } catch (error) {
-      console.error('Get current user error:', error);
-      res.status(500).json({ message: 'Server error fetching user data' });
+      res.status(500).json({ error: 'Failed to login' });
     }
   }
-}; 
+
+  // Get current user
+  async getCurrentUser(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user?.id) {
+        res.status(401).json({ error: 'Not authenticated' });
+        return;
+      }
+
+      const userRepository = AppDataSource.getRepository(User);
+      const user = await userRepository.findOne({ where: { id: req.user.id } });
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      res.json({
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          isStreamer: user.isStreamer,
+          isAdmin: user.isAdmin
+        }
+      });
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      res.status(500).json({ error: 'Failed to get current user' });
+    }
+  }
+
+  // Update user profile
+  async updateProfile(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user?.id) {
+        res.status(401).json({ error: 'Not authenticated' });
+        return;
+      }
+
+      const { username, email, currentPassword, newPassword } = req.body;
+      const userRepository = AppDataSource.getRepository(User);
+      const user = await userRepository.findOne({ where: { id: req.user.id } });
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      // Check if email is already taken
+      if (email && email !== user.email) {
+        const existingUser = await userRepository.findOne({ where: { email: ILike(email) } });
+        if (existingUser) {
+          res.status(400).json({ error: 'Email already in use' });
+          return;
+        }
+      }
+
+      // Check if username is already taken
+      if (username && username !== user.username) {
+        const existingUser = await userRepository.findOne({ where: { username: ILike(username) } });
+        if (existingUser) {
+          res.status(400).json({ error: 'Username already in use' });
+          return;
+        }
+      }
+
+      // Update password if provided
+      if (currentPassword && newPassword) {
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+          res.status(401).json({ error: 'Current password is incorrect' });
+          return;
+        }
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+      }
+
+      // Update other fields
+      if (username) user.username = username;
+      if (email) user.email = email;
+
+      await userRepository.save(user);
+
+      res.json({
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          isStreamer: user.isStreamer,
+          isAdmin: user.isAdmin
+        }
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      res.status(500).json({ error: 'Failed to update profile' });
+    }
+  }
+}
+
+export default new AuthController(); 

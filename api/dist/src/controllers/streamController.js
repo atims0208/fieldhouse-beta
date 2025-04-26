@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const models_1 = require("../models");
 const bunnyService_1 = __importDefault(require("../services/bunnyService"));
+const Stream_1 = require("../models/Stream");
 const StreamModel = models_1.Stream;
 const UserModel = models_1.User;
 exports.default = {
@@ -27,18 +28,11 @@ exports.default = {
             const existingStream = await StreamModel.findOne({
                 where: {
                     userId: req.user.id,
-                    isLive: true
+                    status: Stream_1.StreamStatus.LIVE
                 }
             });
             if (existingStream) {
                 res.status(400).json({ message: 'You already have an active stream' });
-                return;
-            }
-            const streamKey = user.streamKey;
-            const bunnyLibraryId = process.env.BUNNY_STREAM_LIBRARY_ID;
-            if (!bunnyLibraryId) {
-                console.error('Missing BUNNY_STREAM_LIBRARY_ID environment variable');
-                res.status(500).json({ message: 'Server configuration error for streaming' });
                 return;
             }
             const stream = await StreamModel.create({
@@ -47,15 +41,17 @@ exports.default = {
                 description: description || '',
                 category: category || '',
                 tags: tags || [],
-                isLive: true
+                isLive: true,
+                status: Stream_1.StreamStatus.LIVE,
+                startedAt: new Date()
             });
             res.status(201).json({
                 id: stream.id,
                 title: stream.title,
-                isLive: stream.isLive,
-                rtmpUrl: bunnyService_1.default.getRtmpUrl(bunnyLibraryId, streamKey),
-                whipUrl: bunnyService_1.default.getWhipUrl(bunnyLibraryId, streamKey),
-                playbackUrl: bunnyService_1.default.getPlaybackUrl(bunnyLibraryId)
+                status: stream.status,
+                rtmpUrl: bunnyService_1.default.getRtmpUrl(user.streamKey),
+                whipUrl: bunnyService_1.default.getWhipUrl(user.streamKey),
+                playbackUrl: bunnyService_1.default.getPlaybackUrl(stream.id)
             });
         }
         catch (error) {
@@ -74,7 +70,7 @@ exports.default = {
                 where: {
                     id: streamId,
                     userId: req.user.id,
-                    isLive: true
+                    status: Stream_1.StreamStatus.LIVE
                 }
             });
             if (!stream) {
@@ -82,12 +78,13 @@ exports.default = {
                 return;
             }
             stream.isLive = false;
+            stream.status = Stream_1.StreamStatus.ENDED;
             stream.endedAt = new Date();
             await stream.save();
             res.status(200).json({
                 id: stream.id,
                 title: stream.title,
-                isLive: stream.isLive,
+                status: stream.status,
                 endedAt: stream.endedAt
             });
         }
@@ -96,10 +93,10 @@ exports.default = {
             res.status(500).json({ message: 'Failed to end stream' });
         }
     },
-    getActiveStreams: async (req, res) => {
+    getActiveStreams: async (_req, res) => {
         try {
             const activeStreams = await StreamModel.findAll({
-                where: { isLive: true },
+                where: { status: Stream_1.StreamStatus.LIVE },
                 include: [{
                         model: models_1.User,
                         as: 'user',
@@ -108,7 +105,6 @@ exports.default = {
                 order: [['viewerCount', 'DESC']]
             });
             const streamsWithPlaybackUrls = activeStreams.map((stream) => {
-                const bunnyStreamId = 'placeholder';
                 return {
                     id: stream.id,
                     title: stream.title,
@@ -118,8 +114,9 @@ exports.default = {
                     category: stream.category,
                     tags: stream.tags,
                     startedAt: stream.startedAt,
+                    status: stream.status,
                     user: stream.user,
-                    playbackUrl: bunnyService_1.default.getPlaybackUrl(bunnyStreamId)
+                    playbackUrl: bunnyService_1.default.getPlaybackUrl(stream.id)
                 };
             });
             res.status(200).json(streamsWithPlaybackUrls);
@@ -143,26 +140,12 @@ exports.default = {
                 res.status(404).json({ message: 'Stream not found' });
                 return;
             }
-            const bunnyStreamId = 'placeholder';
             if (stream.isLive) {
             }
-            res.status(200).json({
-                id: stream.id,
-                title: stream.title,
-                description: stream.description,
-                thumbnailUrl: stream.thumbnailUrl,
-                isLive: stream.isLive,
-                viewerCount: stream.viewerCount,
-                category: stream.category,
-                tags: stream.tags,
-                startedAt: stream.startedAt,
-                endedAt: stream.endedAt,
-                user: stream.user,
-                playbackUrl: stream.isLive ? bunnyService_1.default.getPlaybackUrl(bunnyStreamId) : null
-            });
+            res.status(200).json(Object.assign(Object.assign({}, stream.toJSON()), { playbackUrl: bunnyService_1.default.getPlaybackUrl(stream.id) }));
         }
         catch (error) {
-            console.error('Get stream by ID error:', error);
+            console.error('Get stream error:', error);
             res.status(500).json({ message: 'Failed to fetch stream' });
         }
     },

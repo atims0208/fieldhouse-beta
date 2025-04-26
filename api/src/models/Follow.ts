@@ -1,35 +1,38 @@
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from 'sequelize-typescript';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+  JoinColumn
+} from 'typeorm';
 import { User } from './User';
 
-@Table({
-  tableName: 'follows',
-  timestamps: true,
-})
-export class Follow extends Model<Follow> {
-  @Column({
-    type: DataType.UUID,
-    defaultValue: DataType.UUIDV4,
-    primaryKey: true,
-  })
+@Entity()
+export class Follow {
+  @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @ForeignKey(() => User)
-  @Column({
-    type: DataType.UUID,
-    allowNull: false,
-  })
+  @Column()
   followerId!: string;
 
-  @ForeignKey(() => User)
-  @Column({
-    type: DataType.UUID,
-    allowNull: false,
-  })
+  @Column()
   followingId!: string;
 
-  @BelongsTo(() => User, 'followerId')
+  @ManyToOne(() => User, user => user.following)
+  @JoinColumn({ name: 'followerId' })
   follower!: User;
 
-  @BelongsTo(() => User, 'followingId')
+  @ManyToOne(() => User, user => user.followers)
+  @JoinColumn({ name: 'followingId' })
   following!: User;
-} 
+
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
+}
+
+export default Follow; 

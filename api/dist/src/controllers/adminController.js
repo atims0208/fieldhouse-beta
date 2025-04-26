@@ -1,156 +1,208 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tempGrantSuperpowers = exports.stopStream = exports.listStreams = exports.setUserBanStatus = exports.listUsers = void 0;
-const adminService = __importStar(require("../services/adminService"));
-const models_1 = require("../models");
-const listUsers = async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 20;
-        const result = await adminService.getAllUsers(page, limit);
-        res.status(200).json(result);
-    }
-    catch (error) {
-        res.status(500).json({ message: 'Error fetching users', error: error.message });
-    }
-};
-exports.listUsers = listUsers;
-const setUserBanStatus = async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const { banStatus, durationHours } = req.body;
-        if (typeof banStatus !== 'boolean') {
-            res.status(400).json({ message: 'banStatus (boolean) is required in request body' });
-            return;
+exports.AdminController = void 0;
+const database_1 = require("../config/database");
+const User_1 = require("../models/User");
+const Stream_1 = require("../models/Stream");
+const typeorm_1 = require("typeorm");
+class AdminController {
+    async getUsers(req, res) {
+        try {
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const search = req.query.search || '';
+            const skip = (page - 1) * limit;
+            const userRepository = database_1.AppDataSource.getRepository(User_1.User);
+            const [users, total] = await userRepository.findAndCount({
+                where: [
+                    { username: (0, typeorm_1.ILike)(`%${search}%`) },
+                    { email: (0, typeorm_1.ILike)(`%${search}%`) }
+                ],
+                skip,
+                take: limit,
+                order: {
+                    id: 'DESC'
+                }
+            });
+            res.json({
+                users,
+                total,
+                page,
+                totalPages: Math.ceil(total / limit)
+            });
         }
-        if (durationHours && (typeof durationHours !== 'number' || durationHours <= 0)) {
-            res.status(400).json({ message: 'Invalid durationHours (must be a positive number)' });
-            return;
+        catch (error) {
+            console.error('Error fetching users:', error);
+            res.status(500).json({ error: 'Failed to fetch users' });
         }
-        const updatedUser = await adminService.setUserBanStatus(userId, banStatus, durationHours);
-        res.status(200).json(updatedUser);
     }
-    catch (error) {
-        let statusCode = 500;
-        let message = 'Could not update user ban status';
-        if (error instanceof Error) {
-            if (error.message === 'User not found') {
-                statusCode = 404;
-                message = error.message;
+    async getStreams(req, res) {
+        try {
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const search = req.query.search || '';
+            const skip = (page - 1) * limit;
+            const streamRepository = database_1.AppDataSource.getRepository(Stream_1.Stream);
+            const [streams, total] = await streamRepository.findAndCount({
+                where: [
+                    { title: (0, typeorm_1.ILike)(`%${search}%`) },
+                    { description: (0, typeorm_1.ILike)(`%${search}%`) }
+                ],
+                relations: ['user'],
+                skip,
+                take: limit,
+                order: {
+                    id: 'DESC'
+                }
+            });
+            res.json({
+                streams,
+                total,
+                page,
+                totalPages: Math.ceil(total / limit)
+            });
+        }
+        catch (error) {
+            console.error('Error fetching streams:', error);
+            res.status(500).json({ error: 'Failed to fetch streams' });
+        }
+    }
+    async banUser(req, res) {
+        try {
+            const { userId, duration } = req.body;
+            const userRepository = database_1.AppDataSource.getRepository(User_1.User);
+            const user = await userRepository.findOne({ where: { id: userId } });
+            if (!user) {
+                res.status(404).json({ error: 'User not found' });
+                return;
             }
-            else if (error.message === 'Cannot ban an admin user.') {
-                statusCode = 403;
-                message = error.message;
+            const bannedUntil = duration ? new Date(Date.now() + duration * 24 * 60 * 60 * 1000) : undefined;
+            await userRepository.update(userId, {
+                isBanned: true,
+                bannedUntil
+            });
+            res.json({ message: 'User banned successfully' });
+        }
+        catch (error) {
+            console.error('Error banning user:', error);
+            res.status(500).json({ error: 'Failed to ban user' });
+        }
+    }
+    async unbanUser(req, res) {
+        try {
+            const { userId } = req.params;
+            const userRepository = database_1.AppDataSource.getRepository(User_1.User);
+            const user = await userRepository.findOne({ where: { id: userId } });
+            if (!user) {
+                res.status(404).json({ error: 'User not found' });
+                return;
             }
+            await userRepository.update(userId, {
+                isBanned: false,
+                bannedUntil: undefined
+            });
+            res.json({ message: 'User unbanned successfully' });
         }
-        res.status(statusCode).json({ message: message, error: (error === null || error === void 0 ? void 0 : error.message) || 'Unknown error' });
-    }
-};
-exports.setUserBanStatus = setUserBanStatus;
-const listStreams = async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 20;
-        const result = await adminService.getAllStreams(page, limit);
-        res.status(200).json(result);
-    }
-    catch (error) {
-        res.status(500).json({ message: 'Error fetching streams', error: error.message });
-    }
-};
-exports.listStreams = listStreams;
-const stopStream = async (req, res) => {
-    try {
-        const { streamId } = req.params;
-        const stoppedStream = await adminService.stopLiveStream(streamId);
-        res.status(200).json(stoppedStream);
-    }
-    catch (error) {
-        let statusCode = 500;
-        let message = 'Could not stop stream';
-        if (error instanceof Error && error.message === 'Live stream not found') {
-            statusCode = 404;
-            message = error.message;
+        catch (error) {
+            console.error('Error unbanning user:', error);
+            res.status(500).json({ error: 'Failed to unban user' });
         }
-        res.status(statusCode).json({ message: message, error: (error === null || error === void 0 ? void 0 : error.message) || 'Unknown error' });
     }
-};
-exports.stopStream = stopStream;
-const tempGrantSuperpowers = async (req, res) => {
-    var _a, _b;
-    const targetEmail = 'itsthealvin@gmail.com';
-    console.log(`>>> TEMPORARY: Received request to grant superpowers to ${targetEmail}`);
-    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.email) !== targetEmail) {
-        console.warn(`>>> TEMPORARY: Unauthorized attempt to grant superpowers by ${(_b = req.user) === null || _b === void 0 ? void 0 : _b.email}`);
-        res.status(403).json({ message: 'Forbidden: You can only run this for your own account.' });
-        return;
+    async deleteStream(req, res) {
+        try {
+            const { streamId } = req.params;
+            const streamRepository = database_1.AppDataSource.getRepository(Stream_1.Stream);
+            const stream = await streamRepository.findOne({ where: { id: streamId } });
+            if (!stream) {
+                res.status(404).json({ error: 'Stream not found' });
+                return;
+            }
+            await streamRepository.remove(stream);
+            res.json({ message: 'Stream deleted successfully' });
+        }
+        catch (error) {
+            console.error('Error deleting stream:', error);
+            res.status(500).json({ error: 'Failed to delete stream' });
+        }
     }
-    try {
-        const userToUpdate = await models_1.User.findOne({ where: { email: targetEmail } });
-        if (userToUpdate) {
+    async updateUserAdminStatus(req, res) {
+        try {
+            const { targetEmail } = req.body;
+            const userRepository = database_1.AppDataSource.getRepository(User_1.User);
+            const userToUpdate = await userRepository.findOne({ where: { email: targetEmail } });
+            if (!userToUpdate) {
+                res.status(404).json({ error: 'User not found' });
+                return;
+            }
             let updated = false;
             if (!userToUpdate.isAdmin) {
-                userToUpdate.isAdmin = true;
+                await userRepository.update(userToUpdate.id, { isAdmin: true });
                 updated = true;
-                console.log(`>>> TEMPORARY: Setting isAdmin=true for ${targetEmail}`);
             }
-            if (!userToUpdate.isStreamer) {
-                userToUpdate.isStreamer = true;
-                updated = true;
-                console.log(`>>> TEMPORARY: Setting isStreamer=true for ${targetEmail}`);
-            }
-            if (updated) {
-                await userToUpdate.save();
-                console.log(`>>> TEMPORARY: User ${targetEmail} successfully updated.`);
-                res.status(200).json({ message: `User ${targetEmail} updated successfully. Please log out and log back in.` });
-            }
-            else {
-                console.log(`>>> TEMPORARY: User ${targetEmail} already has admin and streamer status.`);
-                res.status(200).json({ message: `User ${targetEmail} already has necessary privileges.` });
-            }
+            res.json({
+                message: updated ? 'User is now an admin' : 'User was already an admin',
+                user: userToUpdate
+            });
         }
-        else {
-            console.log(`>>> TEMPORARY: User ${targetEmail} not found.`);
-            res.status(404).json({ message: `User ${targetEmail} not found.` });
+        catch (error) {
+            console.error('Error updating user admin status:', error);
+            res.status(500).json({ error: 'Failed to update user admin status' });
         }
     }
-    catch (err) {
-        console.error(`>>> TEMPORARY: Failed to update user ${targetEmail}:`, err);
-        res.status(500).json({ message: 'Failed to update user privileges.', error: err.message });
+    async stopStream(req, res) {
+        try {
+            const { streamId } = req.params;
+            const streamRepository = database_1.AppDataSource.getRepository(Stream_1.Stream);
+            const stream = await streamRepository.findOne({
+                where: { id: streamId },
+                relations: ['user']
+            });
+            if (!stream) {
+                res.status(404).json({ error: 'Stream not found' });
+                return;
+            }
+            await streamRepository.update(streamId, {
+                status: Stream_1.StreamStatus.ENDED,
+                endedAt: new Date()
+            });
+            res.json({ message: 'Stream stopped successfully' });
+        }
+        catch (error) {
+            console.error('Error stopping stream:', error);
+            res.status(500).json({ error: 'Failed to stop stream' });
+        }
     }
-};
-exports.tempGrantSuperpowers = tempGrantSuperpowers;
+    async updateStreamStatus(req, res) {
+        try {
+            const { streamId } = req.params;
+            const { status } = req.body;
+            const streamRepository = database_1.AppDataSource.getRepository(Stream_1.Stream);
+            const stream = await streamRepository.findOne({
+                where: { id: streamId },
+                relations: ['user']
+            });
+            if (!stream) {
+                res.status(404).json({ error: 'Stream not found' });
+                return;
+            }
+            if (!Object.values(Stream_1.StreamStatus).includes(status)) {
+                res.status(400).json({ error: 'Invalid stream status' });
+                return;
+            }
+            await streamRepository.update(streamId, {
+                status: status
+            });
+            res.json({
+                message: 'Stream status updated successfully',
+                stream: Object.assign(Object.assign({}, stream), { status })
+            });
+        }
+        catch (error) {
+            console.error('Error updating stream status:', error);
+            res.status(500).json({ error: 'Failed to update stream status' });
+        }
+    }
+}
+exports.AdminController = AdminController;
+exports.default = new AdminController();
 //# sourceMappingURL=adminController.js.map

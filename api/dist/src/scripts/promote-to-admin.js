@@ -1,29 +1,30 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const models_1 = require("../models");
-async function makeAdmin(username) {
+const database_1 = require("../config/database");
+const User_1 = require("../models/User");
+async function promoteToAdmin(username) {
     try {
-        await models_1.sequelize.authenticate();
-        console.log('Connected to database successfully.');
-        const user = await models_1.User.findOne({ where: { username } });
+        await database_1.AppDataSource.initialize();
+        const userRepository = database_1.AppDataSource.getRepository(User_1.User);
+        const user = await userRepository.findOne({ where: { username } });
         if (!user) {
-            console.error(`User with username "${username}" not found.`);
+            console.error('User not found');
             process.exit(1);
         }
-        await user.update({ isAdmin: true });
-        console.log(`Successfully made user "${username}" an admin.`);
+        user.isAdmin = true;
+        await userRepository.save(user);
+        console.log(`User ${username} has been promoted to admin`);
+        process.exit(0);
     }
     catch (error) {
-        console.error('Error:', error);
-    }
-    finally {
-        await models_1.sequelize.close();
+        console.error('Error promoting user:', error);
+        process.exit(1);
     }
 }
 const username = process.argv[2];
 if (!username) {
-    console.error('Please provide a username as an argument.');
+    console.error('Please provide a username');
     process.exit(1);
 }
-makeAdmin(username);
+promoteToAdmin(username);
 //# sourceMappingURL=promote-to-admin.js.map

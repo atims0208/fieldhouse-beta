@@ -1,159 +1,93 @@
-import {
-  Table,
-  Column,
-  Model,
-  DataType,
-  BeforeCreate,
-  BeforeUpdate,
-  HasMany,
-  BelongsToMany
-} from 'sequelize-typescript';
-import * as bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
+import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, OneToMany, CreateDateColumn, UpdateDateColumn, BeforeUpdate } from 'typeorm';
+import bcrypt from 'bcryptjs';
 import { Stream } from './Stream';
-import { Follow } from './Follow';
 import { Product } from './Product';
+import { Follow } from './Follow';
+import { GiftTransaction } from './GiftTransaction';
 
-@Table
-export class User extends Model {
-  @Column({
-    type: DataType.UUID,
-    defaultValue: DataType.UUIDV4,
-    primaryKey: true,
-  })
-  declare id: string;
+@Entity('users')
+export class User {
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-    unique: true,
-  })
-  declare username: string;
+  @Column({ unique: true, length: 255 })
+  username!: string;
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-    unique: true,
-    validate: {
-      isEmail: true,
-    },
-  })
-  declare email: string;
+  @Column({ unique: true, length: 255 })
+  email!: string;
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
-  declare password: string;
+  @Column({ select: false })
+  password!: string;
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: true,
-  })
-  declare avatarUrl: string | null;
+  @Column({ nullable: true })
+  avatarUrl?: string;
 
-  @Column({
-    type: DataType.TEXT,
-    allowNull: true,
-  })
-  declare bio: string | null;
+  @Column({ nullable: true, type: 'text' })
+  bio?: string;
 
-  @Column({
-    type: DataType.DATE,
-    allowNull: true,
-  })
-  declare dateOfBirth: Date | null;
+  @Column({ default: false })
+  isStreamer!: boolean;
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: true,
-  })
-  declare idDocumentUrl: string | null;
+  @Column({ default: false })
+  isAdmin!: boolean;
 
-  @Column({
-    type: DataType.BOOLEAN,
-    defaultValue: false,
-    allowNull: false,
-  })
-  declare isStreamer: boolean;
+  @Column({ nullable: true })
+  streamKey?: string;
 
-  @Column({
-    type: DataType.BOOLEAN,
-    defaultValue: false,
-    allowNull: false,
-  })
-  declare isAdmin: boolean;
+  @Column({ default: false })
+  isBanned!: boolean;
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: true,
-    unique: true,
-  })
-  declare streamKey: string | null;
+  @Column({ nullable: true, type: 'timestamp' })
+  bannedUntil?: Date;
 
-  @Column({
-    type: DataType.BOOLEAN,
-    defaultValue: false,
-    allowNull: false,
-  })
-  declare isBanned: boolean;
+  @Column({ type: 'integer', default: 0 })
+  coins: number = 0;
 
-  @Column({
-    type: DataType.DATE,
-    allowNull: true,
-  })
-  declare bannedUntil: Date | null;
+  @Column({ type: 'integer', default: 0 })
+  tickets: number = 0;
 
-  @HasMany(() => Stream)
-  declare streams?: Stream[];
+  @Column({ nullable: true, type: 'date' })
+  dateOfBirth?: Date;
 
-  @HasMany(() => Product)
-  declare products?: Product[];
+  @Column({ nullable: true })
+  idDocumentUrl?: string;
 
-  @BelongsToMany(() => User, {
-    through: () => Follow,
-    foreignKey: 'followerId',
-    otherKey: 'followingId'
-  })
-  declare following?: User[];
+  @OneToMany(() => Stream, stream => stream.user)
+  streams!: Stream[];
 
-  @BelongsToMany(() => User, {
-    through: () => Follow,
-    foreignKey: 'followingId',
-    otherKey: 'followerId'
-  })
-  declare followers?: User[];
+  @OneToMany(() => Product, product => product.seller)
+  products!: Product[];
 
-  async validPassword(password: string): Promise<boolean> {
-    return await bcrypt.compare(password, this.password);
-  }
+  @OneToMany(() => Follow, follow => follow.follower)
+  following!: Follow[];
 
-  generateStreamKey(): string | null {
-    if (!this.streamKey && this.isStreamer) {
-      this.streamKey = `${this.id}-${uuidv4()}`;
-    }
-    return this.streamKey;
-  }
+  @OneToMany(() => Follow, follow => follow.following)
+  followers!: Follow[];
 
-  @BeforeCreate
-  static async hashPasswordCreate(instance: User) {
-    if (instance.password) {
+  @OneToMany(() => GiftTransaction, transaction => transaction.sender)
+  sentGifts?: GiftTransaction[];
+
+  @OneToMany(() => GiftTransaction, transaction => transaction.receiver)
+  receivedGifts?: GiftTransaction[];
+
+  @CreateDateColumn({ type: 'timestamp' })
+  createdAt!: Date;
+
+  @UpdateDateColumn({ type: 'timestamp' })
+  updatedAt!: Date;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  async hashPassword() {
+    if (this.password) {
       const salt = await bcrypt.genSalt(10);
-      instance.password = await bcrypt.hash(instance.password, salt);
-    }
-    if (instance.isStreamer && !instance.streamKey) {
-      instance.streamKey = `${instance.id}-${uuidv4()}`;
+      this.password = await bcrypt.hash(this.password, salt);
     }
   }
 
-  @BeforeUpdate
-  static async hashPasswordUpdate(instance: User) {
-    if (instance.changed('password')) {
-      const salt = await bcrypt.genSalt(10);
-      instance.password = await bcrypt.hash(instance.password, salt);
-    }
-    if (instance.isStreamer && !instance.streamKey) {
-      instance.streamKey = `${instance.id}-${uuidv4()}`;
-    }
+  async comparePassword(candidatePassword: string): Promise<boolean> {
+    return bcrypt.compare(candidatePassword, this.password);
   }
-} 
+}
+
+export default User; 

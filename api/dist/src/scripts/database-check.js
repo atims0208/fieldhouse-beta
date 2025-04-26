@@ -1,24 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const models_1 = require("../models");
-async function checkDatabase() {
+const database_1 = require("../config/database");
+async function checkDatabaseConnection() {
     try {
-        await models_1.sequelize.authenticate();
-        console.log('Database connection has been established successfully.');
-        const [tables] = await models_1.sequelize.query('SELECT table_name FROM information_schema.tables WHERE table_schema = current_schema()');
-        console.log('\nAvailable tables:');
-        console.log(tables);
-        const pool = await models_1.sequelize.connectionManager.getConnection({ type: 'read' });
-        console.log('\nConnection pool status:');
-        console.log('Connection acquired successfully');
-        await models_1.sequelize.connectionManager.releaseConnection(pool);
+        await database_1.AppDataSource.initialize();
+        console.log('Database connection successful!');
+        process.exit(0);
     }
     catch (error) {
-        console.error('Unable to connect to the database:', error);
-    }
-    finally {
-        await models_1.sequelize.close();
+        console.error('Database connection failed:', error);
+        process.exit(1);
     }
 }
-checkDatabase();
+checkDatabaseConnection();
 //# sourceMappingURL=database-check.js.map

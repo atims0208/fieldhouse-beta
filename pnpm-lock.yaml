@@ -11,9 +11,6 @@ importers:
       '@hookform/resolvers':
         specifier: ^3.9.1
         version: 3.10.0(react-hook-form@7.55.0(react@18.3.1))
-      '@lottiefiles/dotlottie-web':
-        specifier: ^0.43.0
-        version: 0.43.0
       '@lottiefiles/react-lottie-player':
         specifier: ^3.6.0
         version: 3.6.0(react@18.3.1)
@@ -162,8 +159,8 @@ importers:
         specifier: ^4.8.1
         version: 4.8.1
       sonner:
-        specifier: ^1.4.3
-        version: 1.7.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^2.0.3
+        version: 2.0.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       tailwind-merge:
         specifier: ^2.2.1
         version: 2.6.0
@@ -305,9 +302,6 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
-
-  '@lottiefiles/dotlottie-web@0.43.0':
-    resolution: {integrity: sha512-mIfb2aZj1xFY/NTtZ4tQPiOVz8MfWDkdUOCVpzCv3q8C8WRKxZUwPgIG8BdqhkujPksS9eYDXH/4f9qxyfNCwg==}
 
   '@lottiefiles/react-lottie-player@3.6.0':
     resolution: {integrity: sha512-WK5TriLJT93VF3w4IjSVyveiedraZCnDhKzCPhpbeLgQeMi6zufxa3dXNc4HmAFRXq+LULPAy+Idv1rAfkReMA==}
@@ -2759,8 +2753,8 @@ packages:
     resolution: {integrity: sha512-/GbIKmo8ioc+NIWIhwdecY0ge+qVBSMdgxGygevmdHj24bsfgtCmcUUcQ5ZzcylGFHsN3k4HB4Cgkl96KVnuew==}
     engines: {node: '>=10.0.0'}
 
-  sonner@1.7.4:
-    resolution: {integrity: sha512-DIS8z4PfJRbIyfVFDVnK9rO3eYDtse4Omcm6bt0oEr5/jtLgysmjuBl1frJ9E/EQZrFmKx2A8m/s5s9CRXIzhw==}
+  sonner@2.0.3:
+    resolution: {integrity: sha512-njQ4Hht92m0sMqqHVDL32V2Oun9W1+PHO9NDv9FHfJjT3JT22IG4Jpo3FPQy+mouRKCXFWO+r67v6MrHX2zeIA==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
       react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
@@ -3245,8 +3239,6 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
-
-  '@lottiefiles/dotlottie-web@0.43.0': {}
 
   '@lottiefiles/react-lottie-player@3.6.0(react@18.3.1)':
     dependencies:
@@ -4998,7 +4990,7 @@ snapshots:
       recharts: 2.15.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       reflect-metadata: 0.2.2
       socket.io-client: 4.8.1
-      sonner: 1.7.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      sonner: 2.0.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       tailwind-merge: 2.6.0
       tailwindcss-animate: 1.0.7(tailwindcss@3.4.17)
       typeorm: 0.3.22(pg@8.15.6)(reflect-metadata@0.2.2)
@@ -5999,7 +5991,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  sonner@1.7.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  sonner@2.0.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)

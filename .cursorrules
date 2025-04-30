@@ -1,0 +1,88 @@
+# Fieldhouse Livestreaming Platform Development Guide
+
+## Step 1: Environment Setup
+1. Install dependencies:
+   ```
+   # Frontend dependencies
+   pnpm install
+
+   # Backend dependencies
+   cd api
+   npm install
+   ```
+
+2. Ensure .env file is set up in api/ directory with:
+   - Database credentials
+   - JWT secret key
+   - Bunny.net API credentials
+   - CORS settings
+
+3. Create .env.local in the root directory with:
+   ```
+   NEXT_PUBLIC_API_URL=http://localhost:4000/api
+   ```
+
+## Step 2: Database Setup
+1. Connect to the DigitalOcean PostgreSQL database with credentials from README
+2. The database tables will be created automatically when the API starts
+
+## Step 3: Running the Application
+1. Start backend:
+   ```
+   cd api
+   npm run dev
+   ```
+
+2. Start frontend (in a separate terminal):
+   ```
+   pnpm dev
+   ```
+
+## Step 4: Development Workflow
+
+### Backend Development
+1. Models are in api/src/models/
+2. Controllers are in api/src/controllers/
+3. Routes are in api/src/routes/
+4. Services are in api/src/services/
+5. Make sure to update model associations in api/src/models/index.ts
+
+### Frontend Development
+1. API client is in lib/api.ts
+2. Authentication context is in components/auth-provider.tsx
+3. Update pages in app/ directory
+4. Components are in components/ directory
+
+### Connecting Frontend to Backend
+1. Use the API client from lib/api.ts
+2. Authenticate with useAuth() hook from components/auth-provider.tsx
+3. Handle streaming using the Bunny.net integration
+
+## Step 5: Streaming Setup
+1. Configure streamer account by upgrading a user
+2. Stream key is generated automatically
+3. Configure streaming software (OBS, etc.) with:
+   - RTMP URL: rtmp://ingest.b-cdn.net/stream/{streamId}
+   - Stream Key: From user account
+
+## Step 6: Deployment
+1. For backend:
+   - Build with `npm run build`
+   - Deploy the dist/ directory
+   - Set environment variables on server
+   
+2. For frontend:
+   - Build with `pnpm build`
+   - Deploy the .next/ directory
+   - Set environment variables on server
+
+## Testing
+- Create test users with both regular and streamer privileges
+- Test streaming using OBS or similar software
+- Test following functionality and stream discovery
+
+## Common Issues
+1. Database connection errors: Check credentials and network access
+2. Streaming issues: Verify Bunny.net configuration
+3. Authentication problems: Check JWT token handling
+4. CORS errors: Ensure CORS is properly configured in the backend 

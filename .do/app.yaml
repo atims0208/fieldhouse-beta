@@ -1,0 +1,54 @@
+name: fieldhouse-beta-2024
+region: nyc
+domains:
+  - domain: api.fieldhouse.live  # Replace with your actual domain
+    type: PRIMARY
+services:
+  - name: api
+    source_dir: api
+    dockerfile_path: Dockerfile
+    github:
+      repo: atims0208/Fieldhouse-beta
+      branch: main
+      deploy_on_push: true
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: DB_USERNAME
+        value: "doadmin"
+      - key: DB_PASSWORD
+        type: SECRET
+        value: "AVNS_yCJGG6BBVytqnvQQpBZ"
+      - key: DB_HOST
+        value: "fieldhouse-db-do-user-13790243-0.k.db.ondigitalocean.com"
+      - key: DB_PORT
+        value: "25060"
+      - key: DB_NAME
+        value: "defaultdb"
+      - key: DB_SSL
+        value: "true"
+      - key: JWT_SECRET
+        type: SECRET
+        value: "NQeYozI1YY33iYlXjfPA4bqNbxq4kH3bCPBJKRl+7pQ="
+      - key: CORS_ORIGIN
+        value: "https://fieldhouse.live"  # Updated to match your domain
+    instance_size_slug: basic-xxs
+    instance_count: 1
+    http_port: 4000
+    health_check:
+      http_path: /api/health
+      port: 4000
+      initial_delay_seconds: 60
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+
+databases:
+  - engine: PG
+    name: fieldhouse-db
+    production: true
+    cluster_name: fieldhouse-db
+    version: "17" 

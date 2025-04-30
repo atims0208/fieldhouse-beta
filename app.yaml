@@ -1,0 +1,72 @@
+name: fieldhouse
+services:
+  - name: frontend
+    source_dir: /
+    dockerfile_path: Dockerfile.frontend
+    github:
+      repo: itsthered1/fieldhouse-beta
+      branch: main
+      deploy_on_push: true
+    http_port: 3000
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    routes:
+      - path: /
+        preserve_path_prefix: true
+    envs:
+      - key: NEXT_PUBLIC_API_URL
+        scope: RUN_TIME
+        value: ${api.PRIVATE_URL}
+
+  - name: api
+    source_dir: /api
+    dockerfile_path: Dockerfile
+    github:
+      repo: itsthered1/fieldhouse-beta
+      branch: main
+      deploy_on_push: true
+    http_port: 4000
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    routes:
+      - path: /api
+        preserve_path_prefix: true
+    envs:
+      - key: DB_HOST
+        scope: RUN_TIME
+        value: "fieldhouse-db-do-user-13790243-0.k.db.ondigitalocean.com"
+      - key: DB_PORT
+        scope: RUN_TIME
+        value: "25060"
+      - key: DB_NAME
+        scope: RUN_TIME
+        value: "defaultdb"
+      - key: DB_USERNAME
+        scope: RUN_TIME
+        value: "doadmin"
+      - key: DB_PASSWORD
+        scope: RUN_TIME
+        value: "AVNS_yCJGG6BBVytqnvQQpBZ"
+      - key: DB_SSL
+        scope: RUN_TIME
+        value: "true"
+      - key: NODE_ENV
+        scope: RUN_TIME
+        value: "production"
+      - key: JWT_SECRET
+        scope: RUN_TIME
+        type: GENERAL
+        value: fieldhouse_jwt_secret_2024_secure_key_123
+      - key: BUNNY_API_KEY
+        scope: RUN_TIME
+        type: GENERAL
+        value: ${BUNNY_API_KEY}
+      - key: CORS_ORIGIN
+        scope: RUN_TIME
+        value: ${frontend.PUBLIC_URL}
+
+databases:
+  - name: db
+    engine: PG
+    version: "15"
+    production: false 

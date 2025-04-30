@@ -1,0 +1,41 @@
+name: Development CI/CD
+
+on:
+  push:
+    branches:
+      - development
+  pull_request:
+    branches:
+      - development
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      - name: Install Dependencies
+        run: |
+          cd api
+          npm install
+      - name: Run Tests
+        run: |
+          cd api
+          npm test
+
+  deploy-development:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/development'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Deploy to DigitalOcean App Platform
+        run: |
+          doctl apps update 2e087d79-ae59-41b6-b306-4adc519a93b9 --spec .do/app.yaml
+          doctl apps create-deployment 2e087d79-ae59-41b6-b306-4adc519a93b9 

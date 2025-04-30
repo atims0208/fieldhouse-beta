@@ -1,0 +1,61 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18.x
+        cache: 'pnpm'
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+
+    - name: Install dependencies
+      run: |
+        pnpm install
+        cd api && npm install
+
+    - name: Build frontend
+      run: pnpm build
+      env:
+        NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+
+    - name: Build backend
+      run: cd api && npm run build
+
+    - name: Deploy to Vercel
+      uses: amondnet/vercel-action@v20
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        vercel-args: '--prod'
+
+    - name: Deploy API to DigitalOcean
+      uses: digitalocean/app-action@v1.1.5
+      with:
+        app_name: fieldhouse-api
+        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+        images: |
+          [
+            {
+              "name": "api",
+              "registry": "registry.digitalocean.com",
+              "repository": "fieldhouse",
+              "tag": "latest"
+            }
+          ] 
